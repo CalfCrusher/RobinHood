@@ -1,6 +1,8 @@
 # RobinHood
 A Bash Script for Bug Hunting Recon and Exploit Automation
 
+![](https://github.com/CalfCrusher/RobinHood/blob/main/RobinHood.jpg)
+
 ### Required Tools (you need to install those by yourself)
 
 - SUBFINDER

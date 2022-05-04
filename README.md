@@ -9,7 +9,7 @@ A Bash Script for Bug Hunting Recon and Exploit Automation
 - WAYBACKURLS
 - HTTPX
 - GXSS
-- GF
+- GF PATTERN
 - DALFOX
 - GOSPIDER
 - SUBJACK

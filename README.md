@@ -13,7 +13,6 @@ A Bash Script for Bug Hunting Recon and Exploit Automation
 - DALFOX
 - GOSPIDER
 - SUBJACK
-- NUCLEI
 
 ### Usage
 
@@ -28,4 +27,4 @@ Run in background
 `$ tail -f` to see progress
 
 ### Note
-This is basic tool for searching low hanging fruits. It's just a simple script.
+This is basic script for searching "low hanging fruits" (XSS mainly) especially for VDP Bug Bounties Programs.

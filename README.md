@@ -1,7 +1,7 @@
 # RobinHood
 A Bash Script for Bug Hunting Recon and Exploit Automation
 
-### Required Tools (you need to install yourself)
+### Required Tools (you need to install those by yourself)
 
 - SUBFINDER
 - AMASS

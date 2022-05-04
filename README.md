@@ -26,7 +26,7 @@ Run in background
 
 `$ nohup ./RobinHood.sh DOMAIN 2>&1 &`
 
-`$ tail -f` to see progress output
+`$ tail -f nohup.out` to see progress output
 
 ### Note
 This is basic script for searching "low hanging fruits" (XSS mainly) especially for VDP Bug Bounties Programs.

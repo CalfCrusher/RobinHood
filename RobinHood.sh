@@ -16,7 +16,6 @@ GF=$(which gf)
 DALFOX=$(which dalfox)
 GOSPIDER=$(which gospider)
 SUBJACK=$(which subjack)
-NUCLEI=$(which nuclei)
 
 # Get Domain as first argument
 HOST=$1
@@ -63,7 +62,7 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo ''
 
 # Search for Subdomains TakeOver
-$SUBJACK -w subdomains_$HOST.txt -t 100 -timeout 25 -o subdomains_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v
+$SUBJACK -w subdomains_$HOST.txt -t 30 -timeout 30 -o subdomains_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v -a
 
 echo ''
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"

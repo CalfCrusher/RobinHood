@@ -62,7 +62,7 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo ''
 
 # Search for Subdomains TakeOver
-$SUBJACK -w subdomains_$HOST.txt -t 30 -timeout 30 -o subdomains_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v -a
+$SUBJACK -w subdomains_$HOST.txt -t 30 -o subdomains_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v -a
 
 echo ''
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"

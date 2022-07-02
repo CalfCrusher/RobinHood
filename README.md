@@ -40,7 +40,7 @@ A Bug Hunting automation script for dreamers and low-hanging fruits
 - SCIPA_VULSCAN NSE (https://github.com/scipag/vulscan)
 
 ### API AND TOOLS LOCATIONS
-*If you don't put anythins inside those variables the related tool will not run.*
+*If you don't set those variables the related tools will not run!*
 
 `BURP_COLLAB_URL="" # Burp Collaborator`
 

@@ -117,11 +117,8 @@ cat live_urls_$HOST.txt | $QSREPLACE -a | $GF lfi > lfi_urls_$HOST.txt
 cat live_urls_$HOST.txt | $QSREPLACE -a | $GF ssrf > ssrf_urls_$HOST.txt
 
 # Run Dalfox on XSS urls
-if [ ! -s xss_urls_$HOST.txt ]
-then
-    echo "\nRunning DALFOX..\n"
-    $DALFOX file xss_urls_$HOST.txt -w 10 -S -o dalfox_XSS_$HOST.txt
-fi
+echo "Running DALFOX.."
+$DALFOX file xss_urls_$HOST.txt -w 10 -S -o dalfox_XSS_$HOST.txt
 
 # Run SQLMAP on SQLi urls
 $SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --dbs -o sqlmap_$HOST

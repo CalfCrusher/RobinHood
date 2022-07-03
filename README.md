@@ -50,7 +50,7 @@ A Bug Hunting automation script for dreamers and low-hanging fruits
 
 `CENSYS_API_ID="" # Censys api id for CloudFlair`
 
-`CENSYS_API_SECRET="" # Censys api secret for CloudFlir`
+`CENSYS_API_SECRET="" # Censys api secret for CloudFlair`
 
 `VULSCAN_NMAP_NSE="" # Vulscan NSE script for Nmap`
 

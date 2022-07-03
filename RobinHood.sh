@@ -76,10 +76,7 @@ fi
 $GOWITNESS file -f live_subdomains_$HOST.txt
 
 # Search for secrets
-if [ ! -z "$JSUBFINDER_SIGN" ]
-then
-    $JSUBFINDER search -f live_subdomains_$HOST.txt -s --sig $JSUBFINDER_SIGN jsubfinder_secrets_$HOST.txt
-fi
+$JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
 cat live_subdomains_$HOST.txt | $GAU --mc 200 | $QSREPLACE -a | tee live_urls_$HOST.txt

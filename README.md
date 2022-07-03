@@ -1,5 +1,5 @@
 # RobinHood
-A Bug Hunting OSINT Automation Script
+## Bug Hunting Recon Automation Script
 
 ![](https://github.com/CalfCrusher/RobinHood/blob/main/RobinHood.jpg)
 

@@ -63,7 +63,7 @@ A Bug Hunting OSINT Automation Script
 * Scan live hosts with Nmap and Vulscan NSE Script
 * Run Nuclei on all subdomains
 * Try to get origin of IPs using CloudFlair
-* Get interesting URLs for XSS, SSRF, SQLi, LFI
+* Get interesting URLs for XSS, SSRF, SQLi, LFI, OPEN REDIRECT
 * Test for basi SSRF using burp.collaborator
 * Search for subdomains takeover
 

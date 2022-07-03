@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## RobinHood - Bug Hunting automation script for dreamers and low-hanging fruits 
+## RobinHood - Bug Hunting OSINT Automation Script
 ## https://github.com/CalfCrusher
 
 ## Usage: Run in background mod with: nohup ./RobinHood.sh LARGE_SCOPE_DOMAIN OUT_OF_SCOPE_LIST 2>&1 &

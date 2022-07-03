@@ -50,6 +50,7 @@ $SUBLIST3R -d $HOST -o subdomains_$HOST.txt
 $SUBFINDER -d $HOST -silent | awk -F[ ' {print $1}' | tee -a subdomains_$HOST.txt
 $AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
 
+# Remove duplicated subdomains
 cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_$HOST.txt
 
 # Exclude out of scope subdomains
@@ -64,7 +65,7 @@ then
     done
 fi
 
-# Check live subdomains and remove duplicates
+# Check live subdomains
 cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Scan with NMAP and Vulners

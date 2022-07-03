@@ -88,7 +88,10 @@ then
 fi
 
 # Extract cloudflare protected hosts from nuclei output
-cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | $QSREPLACE -a | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt
+cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt
+
+# Remove duplicates
+cat cloudflare_hosts_$HOST.txt | $QSREPLACE -a | tee cloudflare_hosts_$HOST.txt
 
 # Try to get origin ip using SSL certificate (cloudflair and censys) YOU NEED YOUR API KEYS!
 if [ ! -z "$CENSYS_API_ID" ]

@@ -29,7 +29,7 @@ A Bug Hunting automation script for dreamers and low-hanging fruits
 
 - NUCLEI (https://github.com/projectdiscovery/nuclei)
 
-- NUCLEI TEMPLATE (https://github.com/projectdiscovery/nuclei-templates)
+- NUCLEI TEMPLATES (https://github.com/projectdiscovery/nuclei-templates)
 
 - SQLMAP (https://github.com/sqlmapproject/sqlmap)
 
@@ -37,7 +37,7 @@ A Bug Hunting automation script for dreamers and low-hanging fruits
 
 - CLOUDFLAIR (https://github.com/christophetd/CloudFlair)
 
-- SCIPA_VULSCAN NSE (https://github.com/scipag/vulscan)
+- SCIPAG VULSCAN NSE (https://github.com/scipag/vulscan)
 
 ### API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*

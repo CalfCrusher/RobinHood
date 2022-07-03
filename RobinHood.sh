@@ -50,7 +50,7 @@ $SUBLIST3R -d $HOST -o subdomains_$HOST.txt
 $SUBFINDER -d $HOST -silent | awk -F[ ' {print $1}' | tee -a subdomains_$HOST.txt
 $AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
 
-cat subdomains_$HOST.txt | $QSREPLACE -a | subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_$HOST.txt
 
 # Exclude out of scope subdomains
 if [ ! -z "$OUT_OF_SCOPE_SUBDOMAINS" ]

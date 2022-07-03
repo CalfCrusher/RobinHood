@@ -88,5 +88,7 @@ You can also give the out-of-scope domains list separated by commas:
 
 `$ nohup ./RobinHood.sh example.com vpn.example.com,test.example.com 2>&1 &`
 
-`$ tail -f nohup.out` to see progress output
+To see progress output
+
+`$ tail -f nohup.out`
 

@@ -1,5 +1,5 @@
 # RobinHood
-A Bug Hunting automation script for dreamers and low-hanging fruits
+A Bug Hunting OSINT Automation Script
 
 ![](https://github.com/CalfCrusher/RobinHood/blob/main/RobinHood.jpg)
 
@@ -17,8 +17,6 @@ A Bug Hunting automation script for dreamers and low-hanging fruits
 
 - GAU (https://github.com/lc/gau)
 
-- DALFOX (https://github.com/hahwul/dalfox)
-
 - QSREPLACE (https://github.com/tomnomnom/qsreplace)
 
 - SUBJACK (https://github.com/haccer/subjack)
@@ -30,8 +28,6 @@ A Bug Hunting automation script for dreamers and low-hanging fruits
 - NUCLEI (https://github.com/projectdiscovery/nuclei)
 
 - NUCLEI TEMPLATES (https://github.com/projectdiscovery/nuclei-templates)
-
-- SQLMAP (https://github.com/sqlmapproject/sqlmap)
 
 - NMAP (https://github.com/nmap/nmap)
 
@@ -68,9 +64,6 @@ A Bug Hunting automation script for dreamers and low-hanging fruits
 * Run Nuclei on all subdomains
 * Try to get origin of IPs using CloudFlair
 * Get interesting URLs for XSS, SSRF, SQLi, LFI
-* Scan with Dalfox
-* Scan with SQLMAP
-* Test for basic LFI vulnerability
 * Test for basi SSRF using burp.collaborator
 * Search for subdomains takeover
 

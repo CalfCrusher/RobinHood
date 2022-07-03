@@ -12,7 +12,7 @@ start=`date +%s`
 echo ''
 echo 'RobinHood - Bug Hunting automation script for dreamers and low-hanging fruits'
 echo ''
-echo '* Running..\n\n'
+echo 'Running..'
 
 # Save locations of tools and file
 BURP_COLLAB_URL="" # Burp Collaborator (EDIT THIS)

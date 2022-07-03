@@ -64,7 +64,7 @@ A Bug Hunting OSINT Automation Script
 * Run Nuclei on all subdomains
 * Try to get origin of IPs using CloudFlair
 * Get interesting URLs for XSS, SSRF, SQLi, LFI, OPEN REDIRECT
-* Test for basi SSRF using burp.collaborator
+* Test for basic SSRF using Burp Collaborator
 * Search for subdomains takeover
 
 ### Usage

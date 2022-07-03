@@ -50,6 +50,8 @@ $SUBLIST3R -d $HOST -o subdomains_$HOST.txt
 $SUBFINDER -d $HOST -silent | awk -F[ ' {print $1}' | tee -a subdomains_$HOST.txt
 $AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
 
+cat subdomains_$HOST.txt | $QSREPLACE -a | subdomains_$HOST.txt
+
 # Exclude out of scope subdomains
 if [ ! -z "$OUT_OF_SCOPE_SUBDOMAINS" ]
 then
@@ -63,7 +65,7 @@ then
 fi
 
 # Check live subdomains and remove duplicates
-cat subdomains_$HOST.txt | $QSREPLACE -a | $HTTPX -silent | tee live_subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
@@ -117,7 +119,7 @@ cat live_urls_$HOST.txt | $QSREPLACE -a | $GF ssrf > ssrf_urls_$HOST.txt
 # Run Dalfox on XSS urls
 if [ ! -s xss_urls_$HOST.txt ]
 then
-    echo "Running DALFOX.."
+    echo "\nRunning DALFOX..\n"
     $DALFOX file xss_urls_$HOST.txt -w 10 -S -o dalfox_XSS_$HOST.txt
 fi
 

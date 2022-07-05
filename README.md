@@ -1,7 +1,7 @@
 # RobinHood
 ## Bug Hunting Recon Automation Script
 
-Thi script performs automated recon on a target domain (large scope) by running the best set of tools to perform scanning and massive reconnaissance. 
+This script performs automated recon on a target domain (large scope) by running the best set of tools to perform scanning and massive reconnaissance. 
 
 ![](https://github.com/CalfCrusher/RobinHood/blob/main/RobinHood.jpg)
 

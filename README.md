@@ -37,6 +37,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - SCIPAG VULSCAN NSE (https://github.com/scipag/vulscan)
 
+- SUBJS (https://github.com/lc/subjs)
+
 - LINKFINDER (https://github.com/GerbenJavado/LinkFinder)
 
 - VHOSTS SIEVE (https://github.com/dariusztytko/vhosts-sieve)

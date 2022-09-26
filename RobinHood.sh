@@ -42,6 +42,7 @@ JSUBFINDER=$(command -v jsubfinder)
 NUCLEI=$(command -v nuclei)
 NMAP=$(command -v nmap)
 SUBJS=$(command -v subjs)
+ANEW=$(command -v anew)
 
 # Get large scope domain as first argument
 HOST=$1
@@ -58,7 +59,6 @@ $AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
 cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_temp_$HOST.txt
 rm subdomains_$HOST.txt
 mv subdomains_temp_$HOST.txt subdomains_$HOST.txt
-
 
 # Exclude out of scope subdomains
 if [ ! -z "$OUT_OF_SCOPE_SUBDOMAINS" ]
@@ -78,7 +78,7 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
-    $NMAP -Pn -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -T2 --top-ports 100
+    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -T2 --top-ports 1000
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
 
@@ -98,25 +98,27 @@ $JSUBFINDER search -f live_subdomains_$HOST.txt -s -o jsubfinder_secrets_$HOST.t
 cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg | tee all_urls_$HOST.txt
 
 # Get live urls with httpx
-cat all_urls_$HOST.txt | httpx -silent | anew | tee live_urls_$HOST.txt
+cat all_urls_$HOST.txt | $HTTPX -silent | $ANEW | tee live_urls_$HOST.txt
 
 # Extracts js endpoints
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
 
 # Discover others endpoints and params from javascript urls list
-python3 $LINKFINDER -i javascript_urls_$HOST.txt -o linkfinder_results_$HOST.html
+python3 $LINKFINDER -i javascript_urls_$HOST.txt | tee linkfinder_results_$HOST.txt
 
 # Run Nuclei on all urls
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_urls_$HOST.txt -timeout 10 -rl 10 -bs 5 -c 5 -hc 2 -es info -o nuclei_results_$HOST.txt
+    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_urls_$HOST.txt -es info -o nuclei_results_$HOST.txt
 fi
 
 # Extract cloudflare protected hosts from nuclei output
 cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt
 
 # Remove duplicates
-cat cloudflare_hosts_$HOST.txt | $QSREPLACE -a | tee cloudflare_hosts_$HOST.txt
+cat cloudflare_hosts_$HOST.txt | $QSREPLACE -a | tee cloudflare_hosts_test_$HOST.txt
+rm cloudflare_hosts_$HOST.txt
+mv cloudflare_hosts_test_$HOST.txt cloudflare_hosts_$HOST.txt
 
 # Try to get origin ip using SSL certificate (cloudflair and censys) YOU NEED YOUR API KEYS!
 if [ ! -z "$CENSYS_API_ID" ]
@@ -129,23 +131,18 @@ fi
 
 # Extract urls with possible XSS params
 cat live_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
-cat xss_urls_$HOST.txt | $QSREPLACE -a | tee xss_urls_$HOST.txt
 
 # Extract urls with possible SQLi params
 cat live_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
-cat sqli_urls_$HOST.txt | $QSREPLACE -a | tee sqli_urls_$HOST.txt
 
 # Extract urls with possible LFI params
 cat live_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
-cat lfi_urls_$HOST.txt | $QSREPLACE -a | tee lfi_urls_$HOST.txt
 
 # Extract urls with possible SSRF params
 cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
-cat ssrf_urls_$HOST.txt | $QSREPLACE -a | tee ssrf_urls_$HOST.txt
 
 # Extract urls with possible OPEN REDIRECT params
 cat live_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
-cat redirect_urls_$HOST.txt | $QSREPLACE -a | tee redirect_urls_$HOST.txt
 
 # Search for subdomains takeover
 if [ ! -z "$FINGERPRINTS" ]

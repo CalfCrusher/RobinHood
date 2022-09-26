@@ -78,7 +78,7 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
-    $NMAP -Pn -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -T2 --top-ports 1000
+    $NMAP -Pn -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -T2 --top-ports 100
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
 

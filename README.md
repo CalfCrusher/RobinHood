@@ -21,6 +21,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - QSREPLACE (https://github.com/tomnomnom/qsreplace)
 
+- ANEW (https://github.com/tomnomnom/anew)
+
 - SUBJACK (https://github.com/haccer/subjack)
 
 - GOWITNESS (https://github.com/sensepost/gowitness)

@@ -84,7 +84,7 @@ $GOWITNESS file -f live_subdomains_$HOST.txt
 python3 $VHOSTS_SIEVE -d live_subdomains_$HOST.txt -o vhost_$HOST.txt
 
 # Searching for public resources in AWS, Azure, and Google Cloud
-python3 $CLOUD_ENUM -kf live_subdomains_$HOST.txt
+python3 $CLOUD_ENUM -kf live_subdomains_$HOST.txt -l cloud_enum_$HOST.txt
 
 # Search for secrets
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s -o jsubfinder_secrets_$HOST.txt

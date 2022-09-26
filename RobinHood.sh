@@ -95,7 +95,7 @@ python3 $CLOUD_ENUM -kf live_subdomains_$HOST.txt -l cloud_enum_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s -o jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --mc 200,403 --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg | tee live_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --mc 200,403 --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg --o live_urls_$HOST.txt
 
 # Extracts js endpoints
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt

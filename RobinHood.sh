@@ -60,6 +60,7 @@ cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_temp_$HOST.txt
 rm subdomains_$HOST.txt
 mv subdomains_temp_$HOST.txt subdomains_$HOST.txt
 
+
 # Exclude out of scope subdomains
 if [ ! -z "$OUT_OF_SCOPE_SUBDOMAINS" ]
 then
@@ -78,7 +79,7 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
-    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -T2 --top-ports 1000
+    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE --top-ports 100
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
 
@@ -86,16 +87,16 @@ fi
 $GOWITNESS file -f live_subdomains_$HOST.txt
 
 # Searching for virtual hosts
-python3 $VHOSTS_SIEVE -d live_subdomains_$HOST.txt -o vhost_$HOST.txt
+python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
 
 # Searching for public resources in AWS, Azure, and Google Cloud
-python3 $CLOUD_ENUM -kf live_subdomains_$HOST.txt -l cloud_enum_$HOST.txt
+python3 $CLOUD_ENUM -kf subdomains_$HOST.txt -l cloud_enum_$HOST.txt
 
 # Search for secrets
-$JSUBFINDER search -f live_subdomains_$HOST.txt -s -o jsubfinder_secrets_$HOST.txt
+$JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg | tee all_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,zip,bmp,webp,ico,txt | tee all_urls_$HOST.txt
 
 # Get live urls with httpx
 cat all_urls_$HOST.txt | $HTTPX -silent | $ANEW | tee live_urls_$HOST.txt
@@ -104,7 +105,7 @@ cat all_urls_$HOST.txt | $HTTPX -silent | $ANEW | tee live_urls_$HOST.txt
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
 
 # Discover others endpoints and params from javascript urls list
-python3 $LINKFINDER -i javascript_urls_$HOST.txt | tee linkfinder_results_$HOST.txt
+python3 $LINKFINDER -i javascript_urls_$HOST.txt -o cli | tee linkfinder_results_$HOST.txt
 
 # Run Nuclei on all urls
 if [ ! -z "$NUCLEI_TEMPLATES" ]

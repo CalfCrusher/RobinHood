@@ -23,9 +23,9 @@ CENSYS_API_SECRET="" # Censys api secret for CloudFlir (EDIT THIS)
 VULSCAN_NMAP_NSE="" # Vulscan NSE script for Nmap (EDIT THIS)
 JSUBFINDER_SIGN="" # Signature location for jsubfinder (EDIT THIS)
 NUCLEI_TEMPLATES="" # Directory templates for Nuclei (EDIT THIS)
-LINKFINDER="/root/LinkFinder/linkfinder.py" # Directory for LinkFinder tool (EDIT THIS)
-VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Directory for VHosts Sieve tool (EDIT THIS)
-CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Directory for cloud_enum, Multi-cloud OSINT tool
+LINKFINDER="" # Directory for LinkFinder tool (EDIT THIS)
+VHOSTS_SIEVE="" # Directory for VHosts Sieve tool (EDIT THIS)
+CLOUD_ENUM="" # Directory for cloud_enum, Multi-cloud OSINT tool (EDIT THIS)
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)

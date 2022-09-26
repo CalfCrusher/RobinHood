@@ -13,6 +13,8 @@ echo ''
 echo 'RobinHood - Bug Hunting Recon Automation Script (https://github.com/CalfCrusher)'
 echo ''
 echo 'Running..'
+echo ''
+echo ''
 
 # Save locations of tools and file
 BURP_COLLAB_URL="" # Burp Collaborator (EDIT THIS)
@@ -26,10 +28,10 @@ NUCLEI_TEMPLATES="" # Directory templates for Nuclei (EDIT THIS)
 LINKFINDER="" # Directory for LinkFinder tool (EDIT THIS)
 VHOSTS_SIEVE="" # Directory for VHosts Sieve tool (EDIT THIS)
 CLOUD_ENUM="" # Directory for cloud_enum, Multi-cloud OSINT tool (EDIT THIS)
+SUBLIST3R="" # Directory for sublist3r (EDIT THIS)
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
-SUBLIST3R=$(command -v sublist3r)
 HTTPX=$(command -v httpx)
 GF=$(command -v gf)
 GAU=$(command -v gau)
@@ -48,12 +50,15 @@ HOST=$1
 OUT_OF_SCOPE_SUBDOMAINS=$2
 
 # Subdomains Enumeration
-$SUBLIST3R -d $HOST -o subdomains_$HOST.txt
+python3 $SUBLIST3R -d $HOST -o subdomains_$HOST.txt
 $SUBFINDER -d $HOST -silent | awk -F[ ' {print $1}' | tee -a subdomains_$HOST.txt
 $AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
 
 # Remove duplicated subdomains
-cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_temp_$HOST.txt
+rm subdomains_$HOST.txt
+mv subdomains_temp_$HOST.txt subdomains_$HOST.txt
+
 
 # Exclude out of scope subdomains
 if [ ! -z "$OUT_OF_SCOPE_SUBDOMAINS" ]
@@ -68,7 +73,7 @@ then
 fi
 
 # Check live subdomains and status code
-cat subdomains_$HOST.txt | $HTTPX -silent -mc 200,403,404,500 | tee live_subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
@@ -90,7 +95,7 @@ python3 $CLOUD_ENUM -kf live_subdomains_$HOST.txt -l cloud_enum_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s -o jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --mc 200 --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg | tee live_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --mc 200,403 --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg | tee live_urls_$HOST.txt
 
 # Extracts js endpoints
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt

@@ -37,6 +37,12 @@ This script performs automated recon on a target domain (large scope) by running
 
 - SCIPAG VULSCAN NSE (https://github.com/scipag/vulscan)
 
+- LINKFINDER (https://github.com/GerbenJavado/LinkFinder)
+
+- VHOSTS SIEVE (https://github.com/dariusztytko/vhosts-sieve)
+
+- CLOUD ENUM (https://github.com/initstring/cloud_enum)
+
 ### API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*
 
@@ -55,6 +61,12 @@ This script performs automated recon on a target domain (large scope) by running
 `JSUBFINDER_SIGN="" # Signature location for jsubfinder tool`
 
 `NUCLEI_TEMPLATES="" # Directory template for Nuclei`
+
+`LINKFINDER="" # Directory for LinkFinder tool`
+
+`VHOSTS_SIEVE="" # Directory for VHosts Sieve tool`
+
+`CLOUD_ENUM="" # Directory for cloud_enum, Multi-cloud OSINT`
 
 ### Features
 

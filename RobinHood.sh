@@ -22,7 +22,10 @@ CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlir (EDIT THIS)
 VULSCAN_NMAP_NSE="" # Vulscan NSE script for Nmap (EDIT THIS)
 JSUBFINDER_SIGN="" # Signature location for jsubfinder (EDIT THIS)
-NUCLEI_TEMPLATES="" # Directory templated for Nuclei (EDIT THIS)
+NUCLEI_TEMPLATES="" # Directory templates for Nuclei (EDIT THIS)
+LINKFINDER="/root/LinkFinder/linkfinder.py" # Directory for LinkFinder tool (EDIT THIS)
+VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Directory for VHosts Sieve tool (EDIT THIS)
+CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Directory for cloud_enum, Multi-cloud OSINT tool
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -36,6 +39,7 @@ GOWITNESS=$(command -v gowitness)
 JSUBFINDER=$(command -v jsubfinder)
 NUCLEI=$(command -v nuclei)
 NMAP=$(command -v nmap)
+SUBJS=$(command -v subjs)
 
 # Get large scope domain as first argument
 HOST=$1
@@ -64,7 +68,7 @@ then
 fi
 
 # Check live subdomains and status code
-cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $HTTPX -silent -mc 200,403,404,500 | tee live_subdomains_$HOST.txt
 
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
@@ -76,16 +80,28 @@ fi
 # Get screenshots of subdomains
 $GOWITNESS file -f live_subdomains_$HOST.txt
 
+# Searching for virtual hosts
+python3 $VHOSTS_SIEVE -d live_subdomains_$HOST.txt -o vhost_$HOST.txt
+
+# Searching for public resources in AWS, Azure, and Google Cloud
+python3 $CLOUD_ENUM -kf live_subdomains_$HOST.txt
+
 # Search for secrets
-$JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
+$JSUBFINDER search -f live_subdomains_$HOST.txt -s -o jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --mc 200 | tee live_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --mc 200 --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg | tee live_urls_$HOST.txt
 
-# Run Nuclei on live subdomains
+# Extracts js endpoints
+cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
+
+# Discover others endpoints and params from javascript urls list
+python3 $LINKFINDER -i javascript_urls_$HOST.txt -o linkfinder_results_$HOST.html
+
+# Run Nuclei on all urls
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_subdomains_$HOST.txt -timeout 10 -rl 10 -bs 5 -c 5 -hc 2 -o nuclei_results_$HOST.txt
+    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_urls_$HOST.txt -timeout 10 -rl 10 -bs 5 -c 5 -hc 2 -es info -o nuclei_results_$HOST.txt
 fi
 
 # Extract cloudflare protected hosts from nuclei output

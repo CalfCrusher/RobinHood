@@ -12,23 +12,24 @@ start=`date +%s`
 echo ''
 echo 'RobinHood - Bug Hunting Recon Automation Script (https://github.com/CalfCrusher)'
 echo ''
-echo 'Running..'
+echo '* Running..'
 echo ''
 echo ''
 
 # Save locations of tools and file
 BURP_COLLAB_URL="" # Burp Collaborator (EDIT THIS)
-FINGERPRINTS="" # Subjack fingerprints location (EDIT THIS)
-CLOUDFLAIR="" # CloudFlair tool location (EDIT THIS)
+FINGERPRINTS="/root/fingerprints.json" # Subjack fingerprints location (EDIT THIS)
+CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # CloudFlair tool location (EDIT THIS)
 CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlir (EDIT THIS)
-VULSCAN_NMAP_NSE="" # Vulscan NSE script for Nmap (EDIT THIS)
-JSUBFINDER_SIGN="" # Signature location for jsubfinder (EDIT THIS)
-NUCLEI_TEMPLATES="" # Directory templates for Nuclei (EDIT THIS)
-LINKFINDER="" # Directory for LinkFinder tool (EDIT THIS)
-VHOSTS_SIEVE="" # Directory for VHosts Sieve tool (EDIT THIS)
-CLOUD_ENUM="" # Directory for cloud_enum, Multi-cloud OSINT tool (EDIT THIS)
-SUBLIST3R="" # Directory for sublist3r (EDIT THIS)
+VULSCAN_NMAP_NSE="/root/vulscan/vulscan.nse" # Vulscan NSE script for Nmap (EDIT THIS)
+JSUBFINDER_SIGN="/root/.jsf_signatures.yaml" # Signature location for jsubfinder (EDIT THIS)
+NUCLEI_TEMPLATES="/root/nuclei-templates" # Directory templates for Nuclei (EDIT THIS)
+LINKFINDER="/root/LinkFinder/linkfinder.py" # Directory for LinkFinder tool (EDIT THIS)
+SECRETFINDER="/root/SecretFinder/SecretFinder.py" # Directory for SecretFinder tool (EDIT THIS)
+VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Directory for VHosts Sieve tool (EDIT THIS)
+CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Directory for cloud_enum, Multi-cloud OSINT tool (EDIT THIS)
+SUBLIST3R="/root/Sublist3r/sublist3r.py" # Directory for sublist3r
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -96,36 +97,55 @@ python3 $CLOUD_ENUM -kf subdomains_$HOST.txt -l cloud_enum_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,zip,bmp,webp,ico,txt | tee all_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,zip,bmp,webp,ico,txt,xml | tee all_urls_$HOST.txt
 
 # Get live urls with httpx
-cat all_urls_$HOST.txt | $HTTPX -silent | $ANEW | tee live_urls_$HOST.txt
+cat all_urls_$HOST.txt | $HTTPX -silent -mc 200 | $ANEW | tee live_urls_$HOST.txt
 
-# Extracts js endpoints
+# Extracts js urls
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
 
-# Discover others endpoints and params from javascript urls list
-python3 $LINKFINDER -i javascript_urls_$HOST.txt -o cli | tee linkfinder_results_$HOST.txt
+# Remove duplicates
+cat javascript_urls_$HOST.txt | $QSREPLACE -a | tee javascript_urls_temp_$HOST.txt
+rm javascript_urls_$HOST.txt
+mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
 
-# Run Nuclei on all urls
+# Discover url endpoints in javascript urls
+if [ ! -z "$LINKFINDER" ]
+then
+    while IFS='' read -r URL || [ -n "${URL}" ]; do
+        python3 $LINKFINDER -i $URL -o cli | tee -a linkfinder_results_$HOST.txt
+    done < javascript_urls_$HOST.txt
+fi
+
+# Discover sensitive data in js files
+if [ ! -z "$SECRETFINDER" ]
+then
+    while IFS='' read -r URL || [ -n "${URL}" ]; do
+        python3 $LINKFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
+    done < javascript_urls_$HOST.txt
+fi
+
+# Run Nuclei on all urls and subdomains
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_urls_$HOST.txt -es info -o nuclei_results_$HOST.txt
+    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_urls_$HOST.txt -es info -o nuclei_urls_$HOST.txt
+    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt
 fi
 
 # Extract cloudflare protected hosts from nuclei output
-cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt
+cat nuclei_subdomains_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt
 
 # Remove duplicates
-cat cloudflare_hosts_$HOST.txt | $QSREPLACE -a | tee cloudflare_hosts_test_$HOST.txt
+cat cloudflare_hosts_$HOST.txt | $QSREPLACE -a | tee cloudflare_hosts_temp_$HOST.txt
 rm cloudflare_hosts_$HOST.txt
-mv cloudflare_hosts_test_$HOST.txt cloudflare_hosts_$HOST.txt
+mv cloudflare_hosts_temp_$HOST.txt cloudflare_hosts_$HOST.txt
 
-# Try to get origin ip using SSL certificate (cloudflair and censys) YOU NEED YOUR API KEYS!
+# Try to get origin ip using SSL certificate (cloudflair and censys)
 if [ ! -z "$CENSYS_API_ID" ]
 then
     while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
-        python3.9 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
+        python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
         sleep 15
     done < cloudflare_hosts_$HOST.txt
 fi

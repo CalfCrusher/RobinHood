@@ -128,9 +128,9 @@ fi
 if [ ! -z "$SECRETFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
-	   echo "\n*** ${URL} ***\n" >> secretfinder_results_$HOST.txt
-	   python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
-	   echo "\n**************\n" >> secretfinder_results_$HOST.txt
+        echo "\n*** ${URL} ***\n" >> secretfinder_results_$HOST.txt
+        python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
+        echo "\n**************\n" >> secretfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
 fi
 
@@ -153,8 +153,8 @@ mv cloudflare_hosts_temp_$HOST.txt cloudflare_hosts_$HOST.txt
 if [ ! -z "$CENSYS_API_ID" ]
 then
     while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
-        python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
-        sleep 20
+    python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
+    sleep 20
     done < cloudflare_hosts_$HOST.txt
 fi
 

@@ -114,13 +114,13 @@ awk "/${HOST}/" javascript_urls_$HOST.txt > javascript_urls_temp_$HOST.txt
 rm javascript_urls_$HOST.txt
 mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
 
-# Discover url endpoints in javascript urls
+# Discover endpoints in javascript urls
 if [ ! -z "$LINKFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
-        echo "\n*** ${URL} ***\n" >> linkfinder_results_$HOST.txt
+        echo -e "[URL] -> ${URL}\n" >> linkfinder_results_$HOST.txt
         python3 $LINKFINDER -i $URL -o cli | tee -a linkfinder_results_$HOST.txt
-        echo "\n**************\n" >> linkfinder_results_$HOST.txt
+        echo -e "\n\n\n" >> linkfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
 fi
 
@@ -128,17 +128,15 @@ fi
 if [ ! -z "$SECRETFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
-        echo "\n*** ${URL} ***\n" >> secretfinder_results_$HOST.txt
         python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
-        echo "\n**************\n" >> secretfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
 fi
 
 # Run Nuclei on all urls and subdomains
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -silent -as -list live_urls_$HOST.txt -o nuclei_urls_$HOST.txt
-    $NUCLEI -silent -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt
+    $NUCLEI -silent -list live_urls_$HOST.txt -es info,low -rl 50 -bs 5 -c 5 -o nuclei_urls_$HOST.txt
+    $NUCLEI -silent -list subdomains_$HOST.txt -rl 50 -bs 5 -c 5 -o nuclei_subdomains_$HOST.txt
 fi
 
 # Extract cloudflare protected hosts from nuclei output

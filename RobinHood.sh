@@ -96,10 +96,10 @@ python3 $CLOUD_ENUM -k $HOST -l cloud_enum_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js | tee all_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
 
 # Get live urls with httpx
-cat all_urls_$HOST.txt | $HTTPX -silent | $ANEW | tee live_urls_$HOST.txt
+cat all_urls_$HOST.txt | $HTTPX -silent -mc 200 | $ANEW | tee live_urls_$HOST.txt
 
 # Extracts js urls
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
@@ -132,11 +132,11 @@ then
     done < javascript_urls_$HOST.txt
 fi
 
-# Run Nuclei on all urls and subdomains
+# Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
     $NUCLEI -silent -list live_urls_$HOST.txt -es info,low -rl 50 -bs 5 -c 5 -o nuclei_urls_$HOST.txt
-    $NUCLEI -silent -list subdomains_$HOST.txt -rl 50 -bs 5 -c 5 -o nuclei_subdomains_$HOST.txt
+    $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt
 fi
 
 # Extract cloudflare protected hosts from nuclei output
@@ -151,8 +151,8 @@ mv cloudflare_hosts_temp_$HOST.txt cloudflare_hosts_$HOST.txt
 if [ ! -z "$CENSYS_API_ID" ]
 then
     while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
-    python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
-    sleep 20
+        python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
+        sleep 15
     done < cloudflare_hosts_$HOST.txt
 fi
 

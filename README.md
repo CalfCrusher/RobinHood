@@ -82,8 +82,8 @@ This script performs automated recon on a target domain (large scope) by running
 * Search for secrets, token and APIs
 * Search hidden endpoints in JS urls
 * Scan live hosts with Nmap and Vulscan NSE Script
-* Run Nuclei on all live urls
-* Search virtual hosts
+* Run Nuclei on all live urls and subdomains
+* Search for virtual hosts
 * Search for public resources in AWS, Azure, and Google Cloud
 * Try to get origin of IPs using CloudFlair
 * Get interesting URLs for XSS, SSRF, SQLi, LFI, OPEN REDIRECT

@@ -61,7 +61,6 @@ cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_temp_$HOST.txt
 rm subdomains_$HOST.txt
 mv subdomains_temp_$HOST.txt subdomains_$HOST.txt
 
-
 # Exclude out of scope subdomains
 if [ ! -z "$OUT_OF_SCOPE_SUBDOMAINS" ]
 then
@@ -80,7 +79,7 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
-    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE --top-ports 100
+    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE --top-ports 50
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
 
@@ -97,7 +96,7 @@ python3 $CLOUD_ENUM -k $HOST -l cloud_enum_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,zip,bmp,webp,ico,txt,xml | tee all_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js | tee all_urls_$HOST.txt
 
 # Get live urls with httpx
 cat all_urls_$HOST.txt | $HTTPX -silent | $ANEW | tee live_urls_$HOST.txt
@@ -111,7 +110,7 @@ rm javascript_urls_$HOST.txt
 mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
 
 # Remove third-part domains from js file urls
-awk '/$HOST/' javascript_urls_$HOST.txt > javascript_urls_temp_$HOST.txt
+awk "/${HOST}/" javascript_urls_$HOST.txt > javascript_urls_temp_$HOST.txt
 rm javascript_urls_$HOST.txt
 mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
 
@@ -129,15 +128,17 @@ fi
 if [ ! -z "$SECRETFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
-        python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
+	   echo "\n*** ${URL} ***\n" >> secretfinder_results_$HOST.txt
+	   python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
+	   echo "\n**************\n" >> secretfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
 fi
 
 # Run Nuclei on all urls and subdomains
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list live_urls_$HOST.txt -es info -o nuclei_urls_$HOST.txt
-    $NUCLEI -silent -t $NUCLEI_TEMPLATES -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt
+    $NUCLEI -silent -as -list live_urls_$HOST.txt -o nuclei_urls_$HOST.txt
+    $NUCLEI -silent -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt
 fi
 
 # Extract cloudflare protected hosts from nuclei output
@@ -153,7 +154,7 @@ if [ ! -z "$CENSYS_API_ID" ]
 then
     while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
         python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
-        sleep 15
+        sleep 20
     done < cloudflare_hosts_$HOST.txt
 fi
 

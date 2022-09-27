@@ -122,7 +122,7 @@ fi
 if [ ! -z "$SECRETFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
-        python3 $LINKFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
+        python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
 fi
 

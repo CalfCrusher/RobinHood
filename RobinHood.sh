@@ -110,11 +110,18 @@ cat javascript_urls_$HOST.txt | $QSREPLACE -a | tee javascript_urls_temp_$HOST.t
 rm javascript_urls_$HOST.txt
 mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
 
+# Remove third-part domains from js file urls
+awk '/$HOST/' javascript_urls_$HOST.txt > javascript_urls_temp_$HOST.txt
+rm javascript_urls_$HOST.txt
+mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
+
 # Discover url endpoints in javascript urls
 if [ ! -z "$LINKFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
+        echo "\n*** ${URL} ***\n" >> linkfinder_results_$HOST.txt
         python3 $LINKFINDER -i $URL -o cli | tee -a linkfinder_results_$HOST.txt
+        echo "\n**************\n" >> linkfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
 fi
 

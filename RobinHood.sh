@@ -91,7 +91,7 @@ $GOWITNESS file -f live_subdomains_$HOST.txt
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
 
 # Searching for public resources in AWS, Azure, and Google Cloud
-python3 $CLOUD_ENUM -kf subdomains_$HOST.txt -l cloud_enum_$HOST.txt
+python3 $CLOUD_ENUM -k $HOST -l cloud_enum_$HOST.txt
 
 # Search for secrets
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
@@ -100,7 +100,7 @@ $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,zip,bmp,webp,ico,txt,xml | tee all_urls_$HOST.txt
 
 # Get live urls with httpx
-cat all_urls_$HOST.txt | $HTTPX -silent -mc 200 | $ANEW | tee live_urls_$HOST.txt
+cat all_urls_$HOST.txt | $HTTPX -silent | $ANEW | tee live_urls_$HOST.txt
 
 # Extracts js urls
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt

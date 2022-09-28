@@ -17,19 +17,22 @@ echo ''
 echo ''
 
 # Save locations of tools and file
-BURP_COLLAB_URL="" # Burp Collaborator (EDIT THIS)
-FINGERPRINTS="/root/fingerprints.json" # Subjack fingerprints location (EDIT THIS)
-CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # CloudFlair tool location (EDIT THIS)
+FINGERPRINTS="/root/go/pkg/mod/github.com/haccer/subjack@v0.0.0-20201112041112-49c51e57deab/fingerprints.json" # Path for subjack fingerprints (EDIT THIS)
+CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)
 CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlir (EDIT THIS)
 VULSCAN_NMAP_NSE="/root/vulscan/vulscan.nse" # Vulscan NSE script for Nmap (EDIT THIS)
-JSUBFINDER_SIGN="/root/.jsf_signatures.yaml" # Signature location for jsubfinder (EDIT THIS)
-NUCLEI_TEMPLATES="/root/nuclei-templates" # Directory templates for Nuclei (EDIT THIS)
-LINKFINDER="/root/LinkFinder/linkfinder.py" # Directory for LinkFinder tool (EDIT THIS)
-SECRETFINDER="/root/SecretFinder/SecretFinder.py" # Directory for SecretFinder tool (EDIT THIS)
-VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Directory for VHosts Sieve tool (EDIT THIS)
-CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Directory for cloud_enum, Multi-cloud OSINT tool (EDIT THIS)
-SUBLIST3R="/root/Sublist3r/sublist3r.py" # Directory for sublist3r
+JSUBFINDER_SIGN="/root/.jsf_signatures.yaml" # Path signature location for jsubfinder (EDIT THIS)
+NUCLEI_TEMPLATES="/root/nuclei-templates" # Path templates for Nuclei (EDIT THIS)
+LINKFINDER="/root/LinkFinder/linkfinder.py" # Path for LinkFinder tool (EDIT THIS)
+SECRETFINDER="/root/SecretFinder/SecretFinder.py" # Path for SecretFinder tool (EDIT THIS)
+VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Path for VHosts Sieve tool (EDIT THIS)
+CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Path for cloud_enum tool, Multi-cloud OSINT tool (EDIT THIS)
+SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool
+ALTDNS_WORDS="/root/altdns/words.txt" # Path to altdns words permutations file
+PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool
+DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool
+XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -44,6 +47,9 @@ NUCLEI=$(command -v nuclei)
 NMAP=$(command -v nmap)
 SUBJS=$(command -v subjs)
 ANEW=$(command -v anew)
+DALFOX=$(command -v dalfox)
+ALTDNS=$(command -v altdns)
+S3SCANNER=$(command -v s3scanner)
 
 # Get large scope domain as first argument
 HOST=$1
@@ -55,6 +61,11 @@ OUT_OF_SCOPE_SUBDOMAINS=$2
 python3 $SUBLIST3R -d $HOST -o subdomains_$HOST.txt
 $SUBFINDER -d $HOST -silent | awk -F[ ' {print $1}' | tee -a subdomains_$HOST.txt
 $AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
+
+# Subdomains permutations with altdns
+$ALTDNS -i subdomains_$HOST.txt -o temp_output -w $ALTDNS_WORDS -r -s altdns_temp_subdomains_$HOST.txt
+cat altdns_temp_subdomains_$HOST.txt | cut -f1 -d":" | tee -a subdomains_$HOST.txt
+rm temp_output && rm altdns_temp_subdomains_$HOST.txt
 
 # Remove duplicated subdomains
 cat subdomains_$HOST.txt | $QSREPLACE -a | tee subdomains_temp_$HOST.txt
@@ -76,6 +87,23 @@ fi
 # Check live subdomains and status code
 cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
+# Get params with ParamSpider from domain
+python3 $PARAMSPIDER --domain $HOST --exclude woff,css,js,png,svg,jpg --output paramspider_results_temp_$HOST.txt
+cat paramspider_results_temp_$HOST.txt | $GF potential | tee paramspider_results_$HOST.txt
+rm paramspider_results_temp_$HOST.txt
+
+# Search for subdomains takeover with DNS Reaper
+if [ ! -z "$DNSREAPER" ]
+then
+    python3 $DNSREAPER file --filename subdomains_$HOST.txt --out dnsreaper_$HOST --out-format json
+fi
+
+# Search for subdomains takeover with subjack
+if [ ! -z "$FINGERPRINTS" ]
+then
+    $SUBJACK -w subdomains_$HOST.txt -a -o subjack_$HOST.txt -ssl -c $FINGERPRINTS -v
+fi
+
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
@@ -90,7 +118,8 @@ $GOWITNESS file -f live_subdomains_$HOST.txt
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
 
 # Searching for public resources in AWS, Azure, and Google Cloud
-python3 $CLOUD_ENUM -k $HOST -l cloud_enum_$HOST.txt
+KEYWORD=$(echo ${HOST} | cut -d"." -f1)
+python3 $CLOUD_ENUM -k $HOST -k $KEYWORD -l cloud_enum_$HOST.txt
 
 # Search for secrets
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
@@ -118,7 +147,7 @@ mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
 if [ ! -z "$LINKFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
-        echo -e "[URL] -> ${URL}\n" >> linkfinder_results_$HOST.txt
+        echo -e "[URL] -> ${URL}" >> linkfinder_results_$HOST.txt
         python3 $LINKFINDER -i $URL -o cli | tee -a linkfinder_results_$HOST.txt
         echo -e "\n\n\n" >> linkfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
@@ -135,7 +164,6 @@ fi
 # Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -silent -list live_urls_$HOST.txt -es info,low -rl 50 -bs 5 -c 5 -o nuclei_urls_$HOST.txt
     $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt
 fi
 
@@ -156,6 +184,24 @@ then
     done < cloudflare_hosts_$HOST.txt
 fi
 
+# Extract s3 buckets from nuclei output
+cat nuclei_subdomains_$HOST.txt | grep "aws-bucket-service" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee aws-bucket-service_$HOST.txt
+
+# Remove duplicates
+cat aws-bucket-service_$HOST.txt | $QSREPLACE -a | tee aws-bucket-service_temp_$HOST.txt
+rm aws-bucket-service_$HOST.txt
+mv aws-bucket-service_temp_$HOST.txt aws-bucket-service_$HOST.txt
+
+if [ ! -z "$S3SCANNER" ]
+then
+    while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
+        URL="https://${DOMAIN}"
+        BUCKET_NAME=$(echo ${DOMAIN} | cut -d"." -f1)
+        $S3SCANNER -u $URL scan -b $BUCKET_NAME | tee -a s3scanner_results_$HOST.txt
+        sleep 10
+    done < aws-bucket-service_$HOST.txt
+fi
+
 # Extract urls with possible XSS params
 cat live_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
 
@@ -171,17 +217,13 @@ cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
 # Extract urls with possible OPEN REDIRECT params
 cat live_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
 
-# Search for subdomains takeover
-if [ ! -z "$FINGERPRINTS" ]
-then
-    $SUBJACK -w subdomains_$HOST.txt -t 50 -timeout 25 -o sub_takeover_$HOST.txt -ssl -c $FINGERPRINTS -v
-fi
+# Running Dalfox on gaued and grep pattern "xss" urls
+$DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
 
-# Test for basic SSRF using Burp Collaborator
-if [ ! -z "$BURP_COLLAB_URL" ]
-then
-    cat ssrf_urls_$HOST.txt | grep "=" | $QSREPLACE $BURP_COLLAB_URL
-fi
+sleep 20
+
+# Running Dalfox on ParamSpider and grep pattern "potential" urls
+$DALFOX file paramspider_results_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
 
 # Save finish execution time
 end=`date +%s`

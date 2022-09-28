@@ -131,4 +131,5 @@ To see progress output
 
 ### Disclaimer
 
-Be free to edit the various settings of tools related to your VPS power/bandwith. Settings for Nuclei, for example, are really "low" because i haven’t so much bandwith for my connection. You can run this script also on your Raspberry like me or your DigitalOcean droplet or just where you want. It takes very long time also in base of which program you run against to !
+Be free to edit the various settings of tools related to your VPS power/bandwith. You can run this script also on your Raspberry or your DigitalOcean droplet or just where you want.
+It takes very long time also in base of which program you run against to !

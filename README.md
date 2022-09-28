@@ -49,10 +49,18 @@ This script performs automated recon on a target domain (large scope) by running
 
 - CLOUD ENUM (https://github.com/initstring/cloud_enum)
 
+- DALFOX (https://github.com/hahwul/dalfox)
+
+- ALTDNS (https://github.com/infosec-au/altdns)
+
+- S3SCANNER (https://github.com/sa7mon/S3Scanner)
+
+- PARAMSPIDER (https://github.com/devanshbatham/ParamSpider)
+
+- DNSREAPER (https://github.com/punk-security/dnsReaper)
+
 ### API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*
-
-`BURP_COLLAB_URL="" # Burp Collaborator`
 
 `FINGERPRINTS="" # Subjack fingerprints location`
 
@@ -66,13 +74,23 @@ This script performs automated recon on a target domain (large scope) by running
 
 `JSUBFINDER_SIGN="" # Signature location for jsubfinder tool`
 
-`NUCLEI_TEMPLATES="" # Directory template for Nuclei`
+`NUCLEI_TEMPLATES="" # Path template for Nuclei`
 
-`LINKFINDER="" # Directory for LinkFinder tool`
+`LINKFINDER="" # Path for LinkFinder tool`
 
-`VHOSTS_SIEVE="" # Directory for VHosts Sieve tool`
+`VHOSTS_SIEVE="" # Path for VHosts Sieve tool`
 
-`CLOUD_ENUM="" # Directory for cloud_enum, Multi-cloud OSINT`
+`CLOUD_ENUM="" # Path for cloud_enum, Multi-cloud OSINT`
+
+`SUBLIST3R="" # Path for sublist3r tool`
+
+`ALTDNS_WORDS="" # Path to altdns words permutations file`
+
+`PARAMSPIDER="" # Path to paramspider tool`
+
+`DNSREAPER="" # Path to dnsrepaer tool`
+
+`XSSHUNTER="" # XSS Hunter url for Dalfox (blind xss)`
 
 ### Features
 

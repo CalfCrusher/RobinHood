@@ -94,19 +94,22 @@ This script performs automated recon on a target domain (large scope) by running
 
 ### Features
 
-* Search for subdomains
+* Search for subdomains (subjack, dnsreaper)
 * Search for live urls using gau
 * Get screenshots of subdomains
 * Search for secrets, token and APIs
 * Search hidden endpoints in JS urls
 * Scan live hosts with Nmap and Vulscan NSE Script
-* Run Nuclei on all live urls and subdomains
+* Run Nuclei on all subdomains
+* Search for XSS with Dalfox and gf Patterns
 * Search for virtual hosts
 * Search for public resources in AWS, Azure, and Google Cloud
 * Try to get origin of IPs using CloudFlair
 * Get interesting URLs for XSS, SSRF, SQLi, LFI, OPEN REDIRECT
-* Test for basic SSRF using Burp Collaborator
-* Search for subdomains takeover
+* Search for subdomains takeover with subjack and DNS Reaper
+* Extend searching subdomains with words permutations using altdns
+* Get all params using ParamSpider
+* Scan S3 Buckets found with S3Scanner
 
 ### Usage
 

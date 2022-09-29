@@ -89,7 +89,7 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Get params with ParamSpider from domain
 python3 $PARAMSPIDER --domain $HOST --exclude woff,css,js,png,svg,jpg --quiet
-cat output/$HOST.txt | tee paramspider_results_$HOST.txt
+cat output/$HOST.txt | $GF xss | tee paramspider_results_$HOST.txt
 rm -rf output/
 
 # Search for subdomains takeover with DNS Reaper

@@ -89,7 +89,7 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Get params with ParamSpider from domain
 python3 $PARAMSPIDER --domain $HOST --exclude woff,css,js,png,svg,jpg --quiet
-cat output/$HOST.txt | cut -f3- -d":" | tee paramspider_results_$HOST.txt
+cat output/$HOST.txt | tee paramspider_results_$HOST.txt
 rm -rf output/
 
 # Search for subdomains takeover with DNS Reaper
@@ -222,7 +222,7 @@ $DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-
 
 sleep 20
 
-# Running Dalfox on ParamSpider
+# Running Dalfox on ParamSpider and grep pattern "potential" urls
 $DALFOX file paramspider_results_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
 
 # Save finish execution time

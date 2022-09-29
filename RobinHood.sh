@@ -50,6 +50,8 @@ ANEW=$(command -v anew)
 DALFOX=$(command -v dalfox)
 ALTDNS=$(command -v altdns)
 S3SCANNER=$(command -v s3scanner)
+URO=$(command -v uro)
+SQLMAP=$(command -v sqlmap)
 
 # Get large scope domain as first argument
 HOST=$1
@@ -89,7 +91,7 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Get params with ParamSpider from domain
 python3 $PARAMSPIDER --domain $HOST --exclude woff,css,js,png,svg,jpg --quiet
-cat output/$HOST.txt | $GF xss | tee paramspider_results_$HOST.txt
+cat output/$HOST.txt | $URO | tee paramspider_results_$HOST.txt
 rm -rf output/
 
 # Search for subdomains takeover with DNS Reaper
@@ -127,8 +129,11 @@ $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 # Get URLs with gau
 cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
 
-# Get live urls with httpx
-cat all_urls_$HOST.txt | $HTTPX -silent -mc 200 | $ANEW | tee live_urls_$HOST.txt
+# Get live urls with httpx (take only 200 status code, avoid redirects)
+cat all_urls_$HOST.txt | $URO | $HTTPX -silent -mc 200 | $ANEW | tee live_urls_$HOST.txt
+
+# Get endpoints that have parameters
+cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
 
 # Extracts js urls
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
@@ -180,7 +185,7 @@ if [ ! -z "$CENSYS_API_ID" ]
 then
     while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
         python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
-        sleep 15
+        sleep 45
     done < cloudflare_hosts_$HOST.txt
 fi
 
@@ -220,10 +225,8 @@ cat live_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
 # Running Dalfox on gaued and grep pattern "xss" urls
 $DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
 
-sleep 20
-
-# Running Dalfox on ParamSpider and grep pattern "potential" urls
-$DALFOX file paramspider_results_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
+# Running sqlmap on gaued and grep pattern "sqli" urls
+$SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --output-dir=sqlmap_$HOST
 
 # Save finish execution time
 end=`date +%s`

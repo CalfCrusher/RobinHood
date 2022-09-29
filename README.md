@@ -23,6 +23,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - ANEW (https://github.com/tomnomnom/anew)
 
+- URO (https://github.com/s0md3v/uro)
+
 - SUBJACK (https://github.com/haccer/subjack)
 
 - GOWITNESS (https://github.com/sensepost/gowitness)

@@ -29,6 +29,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - GOWITNESS (https://github.com/sensepost/gowitness)
 
+- SQLMAP (https://github.com/sqlmapproject/sqlmap)
+
 - JSUBFINDER (https://github.com/ThreatUnkown/jsubfinder)
 
 - NUCLEI (https://github.com/projectdiscovery/nuclei)
@@ -99,11 +101,13 @@ This script performs automated recon on a target domain (large scope) by running
 * Search for subdomains (subjack, dnsreaper)
 * Search for live urls using gau
 * Get screenshots of subdomains
+* Powered by GF-Patterns
 * Search for secrets, token and APIs
 * Search hidden endpoints in JS urls
 * Scan live hosts with Nmap and Vulscan NSE Script
 * Run Nuclei on all subdomains
-* Search for XSS with Dalfox and gf Patterns
+* Search for XSS with Dalfox
+* Search for SQL injections with sqlmap
 * Search for virtual hosts
 * Search for public resources in AWS, Azure, and Google Cloud
 * Try to get origin of IPs using CloudFlair

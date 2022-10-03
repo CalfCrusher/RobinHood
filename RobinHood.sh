@@ -52,6 +52,7 @@ ALTDNS=$(command -v altdns)
 S3SCANNER=$(command -v s3scanner)
 URO=$(command -v uro)
 SQLMAP=$(command -v sqlmap)
+JAELES=$(command -v jaeles)
 
 # Get large scope domain as first argument
 HOST=$1
@@ -114,7 +115,7 @@ then
 fi
 
 # Get screenshots of subdomains
-$GOWITNESS file -f live_subdomains_$HOST.txt
+$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST
 
 # Searching for virtual hosts
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
@@ -129,8 +130,8 @@ $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 # Get URLs with gau
 cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
 
-# Get live urls with httpx (take only 200 status code, avoid redirects)
-cat all_urls_$HOST.txt | $URO | $HTTPX -silent -mc 200 | $ANEW | tee live_urls_$HOST.txt
+# Get live urls with httpx
+cat all_urls_$HOST.txt | $HTTPX -silent -mc 200,403,401 | $URO | tee live_urls_$HOST.txt
 
 # Get endpoints that have parameters
 cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
@@ -190,12 +191,12 @@ then
 fi
 
 # Extract s3 buckets from nuclei output
-cat nuclei_subdomains_$HOST.txt | grep "aws-bucket-service" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee aws-bucket-service_$HOST.txt
+cat nuclei_subdomains_$HOST.txt | grep "aws-bucket-service" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee aws_s3_$HOST.txt
 
 # Remove duplicates
-cat aws-bucket-service_$HOST.txt | $QSREPLACE -a | tee aws-bucket-service_temp_$HOST.txt
-rm aws-bucket-service_$HOST.txt
-mv aws-bucket-service_temp_$HOST.txt aws-bucket-service_$HOST.txt
+cat aws_s3_$HOST.txt | $QSREPLACE -a | tee aws-bucket-service_temp_$HOST.txt
+rm aws_s3_$HOST.txt
+mv aws-bucket-service_temp_$HOST.txt aws_s3_$HOST.txt
 
 if [ ! -z "$S3SCANNER" ]
 then
@@ -204,7 +205,7 @@ then
         BUCKET_NAME=$(echo ${DOMAIN} | cut -d"." -f1)
         $S3SCANNER -u $URL scan -b $BUCKET_NAME | tee -a s3scanner_results_$HOST.txt
         sleep 10
-    done < aws-bucket-service_$HOST.txt
+    done < aws_s3_$HOST.txt
 fi
 
 # Extract urls with possible XSS params
@@ -222,11 +223,26 @@ cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
 # Extract urls with possible OPEN REDIRECT params
 cat live_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
 
+# Extract urls with possible XSS params from paramspider output
+cat paramspider_results_$HOST.txt | $GF xss > paramspider_xss_urls_$HOST.txt
+
+# Extract urls with possible SQLi params from paramspider output
+cat paramspider_results_$HOST.txt | $GF sqli > paramspider_sqli_urls_$HOST.txt
+
+# Running Jaeles on all live urls
+$JAELES scan -U live_urls_$HOST.txt -c 5 -o jaeles_allurls_results$HOST.txt
+
+# Running Dalfox on paramspider output and grep pattern "xss" urls
+$DALFOX file paramspider_xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
+
 # Running Dalfox on gaued and grep pattern "xss" urls
 $DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
 
+# Running sqlmap on paramspider output and grep pattern "sqli" urls
+$SQLMAP -m paramspider_sqli_urls_$HOST.txt --smart --batch --random-agent --output-dir=sqlmap_$HOST
+
 # Running sqlmap on gaued and grep pattern "sqli" urls
-$SQLMAP -m sqli_urls_$HOST.txt --batch --random-agent --output-dir=sqlmap_$HOST
+$SQLMAP -m sqli_urls_$HOST.txt --smart --batch --random-agent --output-dir=sqlmap_$HOST
 
 # Save finish execution time
 end=`date +%s`

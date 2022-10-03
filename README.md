@@ -33,6 +33,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - JSUBFINDER (https://github.com/ThreatUnkown/jsubfinder)
 
+- JAELES (https://github.com/jaeles-project/jaeles)
+
 - NUCLEI (https://github.com/projectdiscovery/nuclei)
 
 - NUCLEI TEMPLATES (https://github.com/projectdiscovery/nuclei-templates)
@@ -106,6 +108,7 @@ This script performs automated recon on a target domain (large scope) by running
 * Search hidden endpoints in JS urls
 * Scan live hosts with Nmap and Vulscan NSE Script
 * Run Nuclei on all subdomains
+* Run Jaeles on all live urls
 * Search for XSS with Dalfox
 * Search for SQL injections with sqlmap
 * Search for virtual hosts
@@ -137,5 +140,5 @@ To see progress output
 
 ### Disclaimer
 
-Be free to edit the various settings of tools related to your VPS power/bandwith. You can run this script also on your Raspberry or your DigitalOcean droplet or just where you want.
-It takes very long time also in base of which program you run against to !
+This is mainly developed for VDP programs, to find bugs and get invited to others Programs. Be free to edit the various settings of tools related to your VPS power/bandwith. You can run this script also on your Raspberry or your DigitalOcean droplet or just where you want.
+It takes very long time also in base of which program you run against to.

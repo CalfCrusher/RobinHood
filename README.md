@@ -27,6 +27,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - SUBJACK (https://github.com/haccer/subjack)
 
+- SUBDOMAINIZER (https://github.com/nsonaniya2010/SubDomainizer)
+
 - GOWITNESS (https://github.com/sensepost/gowitness)
 
 - SQLMAP (https://github.com/sqlmapproject/sqlmap)
@@ -100,7 +102,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 ### Features
 
-* Search for subdomains (subjack, dnsreaper)
+* Searching subdomains
+* Search for subdomains takeover (subjack, dnsreaper)
 * Search for live urls using gau
 * Get screenshots of subdomains
 * Powered by GF-Patterns

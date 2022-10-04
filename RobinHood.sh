@@ -20,7 +20,7 @@ echo ''
 FINGERPRINTS="/root/go/pkg/mod/github.com/haccer/subjack@v0.0.0-20201112041112-49c51e57deab/fingerprints.json" # Path for subjack fingerprints (EDIT THIS)
 CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)
 CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
-CENSYS_API_SECRET="" # Censys api secret for CloudFlir (EDIT THIS)
+CENSYS_API_SECRET="" # Censys api secret for CloudFlair (EDIT THIS)
 VULSCAN_NMAP_NSE="/root/vulscan/vulscan.nse" # Vulscan NSE script for Nmap (EDIT THIS)
 JSUBFINDER_SIGN="/root/.jsf_signatures.yaml" # Path signature location for jsubfinder (EDIT THIS)
 NUCLEI_TEMPLATES="/root/nuclei-templates" # Path templates for Nuclei (EDIT THIS)
@@ -28,10 +28,11 @@ LINKFINDER="/root/LinkFinder/linkfinder.py" # Path for LinkFinder tool (EDIT THI
 SECRETFINDER="/root/SecretFinder/SecretFinder.py" # Path for SecretFinder tool (EDIT THIS)
 VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Path for VHosts Sieve tool (EDIT THIS)
 CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Path for cloud_enum tool, Multi-cloud OSINT tool (EDIT THIS)
-SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool
-ALTDNS_WORDS="/root/altdns/words.txt" # Path to altdns words permutations file
-PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool
-DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool
+SUBDOMAINIZER="/root/SubDomainizer/SubDomainizer.py" # Path for SubDomainizer tool (EDIT THIS)
+SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool (EDIT THIS)
+ALTDNS_WORDS="/root/altdns/words-medium.txt" # Path to altdns words permutations file (EDIT THIS)
+PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool (EDIT THIS)
+DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
 XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
 
 SUBFINDER=$(command -v subfinder)
@@ -128,10 +129,10 @@ python3 $CLOUD_ENUM -k $HOST -k $KEYWORD -l cloud_enum_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --fc 404,302,301 --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
 
-# Get live urls with httpx
-cat all_urls_$HOST.txt | $HTTPX -silent -mc 200,403,401 | $URO | tee live_urls_$HOST.txt
+# Decrease numbers of URLs using URO
+cat all_urls_$HOST.txt | $URO | tee live_urls_$HOST.txt
 
 # Get endpoints that have parameters
 cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
@@ -159,12 +160,18 @@ then
     done < javascript_urls_$HOST.txt
 fi
 
-# Discover sensitive data in js files
+# Discover sensitive data in js files using SECRET FINDER (you'll get many false positive!)
 if [ ! -z "$SECRETFINDER" ]
 then
     while IFS='' read -r URL || [ -n "${URL}" ]; do
         python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
+fi
+
+# Discover sensitive data in js files using SubDomainizer
+if [ ! -z "$SUBDOMAINIZER" ]
+then
+    python3 $SUBDOMAINIZER -l live_urls_$HOST.txt -k -o subdomainizer_results_$HOST.txt -d $HOST
 fi
 
 # Run Nuclei
@@ -232,14 +239,22 @@ cat paramspider_results_$HOST.txt | $GF sqli > paramspider_sqli_urls_$HOST.txt
 # Running Jaeles on all live urls
 $JAELES scan -U live_urls_$HOST.txt -c 5 -o jaeles_allurls_results$HOST.txt
 
+sleep 30
+
 # Running Dalfox on paramspider output and grep pattern "xss" urls
 $DALFOX file paramspider_xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
+
+sleep 30
 
 # Running Dalfox on gaued and grep pattern "xss" urls
 $DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
 
+sleep 30
+
 # Running sqlmap on paramspider output and grep pattern "sqli" urls
 $SQLMAP -m paramspider_sqli_urls_$HOST.txt --smart --batch --random-agent --output-dir=sqlmap_$HOST
+
+sleep 30
 
 # Running sqlmap on gaued and grep pattern "sqli" urls
 $SQLMAP -m sqli_urls_$HOST.txt --smart --batch --random-agent --output-dir=sqlmap_$HOST

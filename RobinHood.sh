@@ -237,7 +237,7 @@ cat paramspider_results_$HOST.txt | $GF xss > paramspider_xss_urls_$HOST.txt
 cat paramspider_results_$HOST.txt | $GF sqli > paramspider_sqli_urls_$HOST.txt
 
 # Running Jaeles on all live urls
-$JAELES scan -U live_urls_$HOST.txt -c 5 -o jaeles_allurls_results$HOST.txt
+$JAELES scan -U live_urls_$HOST.txt -c 2 -o jaeles_allurls_results$HOST.txt
 
 sleep 30
 

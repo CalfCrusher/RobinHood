@@ -52,7 +52,7 @@ DALFOX=$(command -v dalfox)
 ALTDNS=$(command -v altdns)
 S3SCANNER=$(command -v s3scanner)
 URO=$(command -v uro)
-SQLMAP=$(command -v sqlmap)
+SQLMAP="/snap/bin/sqlmap"
 JAELES=$(command -v jaeles)
 
 # Get large scope domain as first argument
@@ -116,7 +116,7 @@ then
 fi
 
 # Get screenshots of subdomains
-$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST
+$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST -X 960 -Y 600 --disable-db
 
 # Searching for virtual hosts
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
@@ -177,7 +177,7 @@ fi
 # Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt
+    $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt -c 5
 fi
 
 # Extract cloudflare protected hosts from nuclei output
@@ -237,7 +237,7 @@ cat paramspider_results_$HOST.txt | $GF xss > paramspider_xss_urls_$HOST.txt
 cat paramspider_results_$HOST.txt | $GF sqli > paramspider_sqli_urls_$HOST.txt
 
 # Running Jaeles on all live urls
-$JAELES scan -U live_urls_$HOST.txt -c 2 -o jaeles_allurls_results$HOST.txt
+$JAELES scan -U live_urls_$HOST.txt -c 2 -o jaeles_results$HOST
 
 sleep 30
 

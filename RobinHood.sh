@@ -28,12 +28,12 @@ LINKFINDER="/root/LinkFinder/linkfinder.py" # Path for LinkFinder tool (EDIT THI
 SECRETFINDER="/root/SecretFinder/SecretFinder.py" # Path for SecretFinder tool (EDIT THIS)
 VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Path for VHosts Sieve tool (EDIT THIS)
 CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Path for cloud_enum tool, Multi-cloud OSINT tool (EDIT THIS)
-SUBDOMAINIZER="/root/SubDomainizer/SubDomainizer.py" # Path for SubDomainizer tool (EDIT THIS)
 SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool (EDIT THIS)
 ALTDNS_WORDS="/root/altdns/words-medium.txt" # Path to altdns words permutations file (EDIT THIS)
 PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool (EDIT THIS)
 DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
 XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
+ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -50,10 +50,8 @@ SUBJS=$(command -v subjs)
 ANEW=$(command -v anew)
 DALFOX=$(command -v dalfox)
 ALTDNS=$(command -v altdns)
-S3SCANNER=$(command -v s3scanner)
 URO=$(command -v uro)
 SQLMAP="/snap/bin/sqlmap"
-JAELES=$(command -v jaeles)
 
 # Get large scope domain as first argument
 HOST=$1
@@ -116,7 +114,7 @@ then
 fi
 
 # Get screenshots of subdomains
-$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST -X 960 -Y 600 --disable-db
+$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST
 
 # Searching for virtual hosts
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
@@ -168,12 +166,6 @@ then
     done < javascript_urls_$HOST.txt
 fi
 
-# Discover sensitive data in js files using SubDomainizer
-if [ ! -z "$SUBDOMAINIZER" ]
-then
-    python3 $SUBDOMAINIZER -l live_urls_$HOST.txt -k -o subdomainizer_results_$HOST.txt -d $HOST
-fi
-
 # Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
@@ -197,24 +189,6 @@ then
     done < cloudflare_hosts_$HOST.txt
 fi
 
-# Extract s3 buckets from nuclei output
-cat nuclei_subdomains_$HOST.txt | grep "aws-bucket-service" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee aws_s3_$HOST.txt
-
-# Remove duplicates
-cat aws_s3_$HOST.txt | $QSREPLACE -a | tee aws-bucket-service_temp_$HOST.txt
-rm aws_s3_$HOST.txt
-mv aws-bucket-service_temp_$HOST.txt aws_s3_$HOST.txt
-
-if [ ! -z "$S3SCANNER" ]
-then
-    while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
-        URL="https://${DOMAIN}"
-        BUCKET_NAME=$(echo ${DOMAIN} | cut -d"." -f1)
-        $S3SCANNER -u $URL scan -b $BUCKET_NAME | tee -a s3scanner_results_$HOST.txt
-        sleep 10
-    done < aws_s3_$HOST.txt
-fi
-
 # Extract urls with possible XSS params
 cat live_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
 
@@ -236,10 +210,11 @@ cat paramspider_results_$HOST.txt | $GF xss > paramspider_xss_urls_$HOST.txt
 # Extract urls with possible SQLi params from paramspider output
 cat paramspider_results_$HOST.txt | $GF sqli > paramspider_sqli_urls_$HOST.txt
 
-# Running Jaeles on all live urls
-$JAELES scan -U live_urls_$HOST.txt -c 2 -o jaeles_results$HOST
-
-sleep 30
+# Run Oralyzer
+if [ ! -z "$ORALYZER" ]
+then
+    python3 $ORALYZER -l redirect_urls_$HOST.txt > oralyzer_results_$HOST.txt
+fi
 
 # Running Dalfox on paramspider output and grep pattern "xss" urls
 $DALFOX file paramspider_xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless

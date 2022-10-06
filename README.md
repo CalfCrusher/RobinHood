@@ -27,15 +27,13 @@ This script performs automated recon on a target domain (large scope) by running
 
 - SUBJACK (https://github.com/haccer/subjack)
 
-- SUBDOMAINIZER (https://github.com/nsonaniya2010/SubDomainizer)
-
 - GOWITNESS (https://github.com/sensepost/gowitness)
 
 - SQLMAP (https://github.com/sqlmapproject/sqlmap)
 
 - JSUBFINDER (https://github.com/ThreatUnkown/jsubfinder)
 
-- JAELES (https://github.com/jaeles-project/jaeles)
+- ORALYZER (https://github.com/r0075h3ll/Oralyzer)
 
 - NUCLEI (https://github.com/projectdiscovery/nuclei)
 
@@ -60,8 +58,6 @@ This script performs automated recon on a target domain (large scope) by running
 - DALFOX (https://github.com/hahwul/dalfox)
 
 - ALTDNS (https://github.com/infosec-au/altdns)
-
-- S3SCANNER (https://github.com/sa7mon/S3Scanner)
 
 - PARAMSPIDER (https://github.com/devanshbatham/ParamSpider)
 
@@ -111,7 +107,6 @@ This script performs automated recon on a target domain (large scope) by running
 * Search hidden endpoints in JS urls
 * Scan live hosts with Nmap and Vulscan NSE Script
 * Run Nuclei on all subdomains
-* Run Jaeles on all live urls
 * Search for XSS with Dalfox
 * Search for SQL injections with sqlmap
 * Search for virtual hosts
@@ -121,7 +116,7 @@ This script performs automated recon on a target domain (large scope) by running
 * Search for subdomains takeover with subjack and DNS Reaper
 * Extend searching subdomains with words permutations using altdns
 * Get all params using ParamSpider
-* Scan S3 Buckets found with S3Scanner
+* Scan for Open Redirect with Oralyzer
 
 ### Usage
 

@@ -41,6 +41,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - NMAP (https://github.com/nmap/nmap)
 
+- CRLFUZZ (https://github.com/dwisiswant0/crlfuzz)
+
 - CLOUDFLAIR (https://github.com/christophetd/CloudFlair)
 
 - SCIPAG VULSCAN NSE (https://github.com/scipag/vulscan)
@@ -117,6 +119,7 @@ This script performs automated recon on a target domain (large scope) by running
 * Extend searching subdomains with words permutations using altdns
 * Get all params using ParamSpider
 * Scan for Open Redirect with Oralyzer
+* Fuzzing for CRLF
 
 ### Usage
 

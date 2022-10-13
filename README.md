@@ -65,7 +65,7 @@ This script performs automated recon on a target domain (large scope) by running
 
 - DNSREAPER (https://github.com/punk-security/dnsReaper)
 
-### API AND TOOLS LOCATIONS
+### EXAMPLES OF API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*
 
 `FINGERPRINTS="" # Subjack fingerprints location`

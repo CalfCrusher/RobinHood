@@ -34,6 +34,7 @@ PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool (EDIT 
 DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
 XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
 ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
+ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -51,6 +52,7 @@ ANEW=$(command -v anew)
 DALFOX=$(command -v dalfox)
 ALTDNS=$(command -v altdns)
 URO=$(command -v uro)
+CRLFUZZ=$(command -v crlfuzz)
 SQLMAP="/snap/bin/sqlmap"
 
 # Get large scope domain as first argument
@@ -88,6 +90,9 @@ fi
 
 # Check live subdomains and status code
 cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
+
+# Fuzzing CRLF vulnerabilities
+$CRLFUZZ -l live_subdomains_$HOST.txt -o crlfuzz_results_$HOST.txt
 
 # Get params with ParamSpider from domain
 python3 $PARAMSPIDER --domain $HOST --exclude woff,css,js,png,svg,jpg --quiet
@@ -213,7 +218,7 @@ cat paramspider_results_$HOST.txt | $GF sqli > paramspider_sqli_urls_$HOST.txt
 # Run Oralyzer
 if [ ! -z "$ORALYZER" ]
 then
-    python3 $ORALYZER -l redirect_urls_$HOST.txt > oralyzer_results_$HOST.txt
+    python3 $ORALYZER -l redirect_urls_$HOST.txt -p $ORALYZER_PAYLOADS > oralyzer_results_$HOST.txt
 fi
 
 # Running Dalfox on paramspider output and grep pattern "xss" urls

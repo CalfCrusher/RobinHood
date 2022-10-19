@@ -89,7 +89,7 @@ then
 fi
 
 # Check live subdomains and status code
-cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $HTTPX -silent -ports 80,443,3000,8080,8000,8081,8008,8888,8443,9000,9001,9090 | tee live_subdomains_$HOST.txt
 
 # Fuzzing CRLF vulnerabilities
 $CRLFUZZ -l live_subdomains_$HOST.txt -o crlfuzz_results_$HOST.txt
@@ -114,7 +114,7 @@ fi
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
-    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE --top-ports 50
+    $NMAP –max-rate 500 -sS -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -p21,22,3000,8080,8000,8081,8008,8888,8443,9000,9001,9090
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
 
@@ -174,7 +174,7 @@ fi
 # Run Nuclei on ALL subdomains
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt -c 5
+    $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt -c 3
 fi
 
 # Extract cloudflare protected hosts from nuclei output

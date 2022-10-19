@@ -119,7 +119,7 @@ then
 fi
 
 # Get screenshots of subdomains
-$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST
+$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST -t 2
 
 # Searching for virtual hosts
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
@@ -171,7 +171,7 @@ then
     done < javascript_urls_$HOST.txt
 fi
 
-# Run Nuclei
+# Run Nuclei on ALL subdomains
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
     $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt -c 5
@@ -222,12 +222,12 @@ then
 fi
 
 # Running Dalfox on paramspider output and grep pattern "xss" urls
-$DALFOX file paramspider_xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
+$DALFOX file paramspider_xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless --waf-evasion
 
 sleep 30
 
 # Running Dalfox on gaued and grep pattern "xss" urls
-$DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
+$DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless --waf-evasion
 
 sleep 30
 

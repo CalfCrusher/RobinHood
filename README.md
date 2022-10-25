@@ -139,5 +139,5 @@ To see progress output
 
 ### Disclaimer
 
-This is mainly developed for VDP programs, to find bugs and get invited to others Programs. Be free to edit the various settings of tools related to your VPS power/bandwith. You can run this script also on your Raspberry or your DigitalOcean droplet or just where you want.
-It takes very long time also in base of which program you run against to.
+Be free to edit the various settings of tools related to your VPS power/bandwith. You can run this script also on your Raspberry or your DigitalOcean droplet or just where you want.
+It takes very long time also in base of which domain you run against to.

@@ -161,7 +161,7 @@ fi
 python3 $CORSY -i live_urls_$HOST.txt -d 2 -o corsy_results_$HOST.json
 
 # Run ppmap tool (Prototype Pollution)
-cat live_urls_$HOST.txt | ppmap | tee ppmap_results_$HOST.txt
+cat live_urls_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
 
 # Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]

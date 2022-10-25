@@ -23,16 +23,14 @@ CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlair (EDIT THIS)
 VULSCAN_NMAP_NSE="/root/vulscan/vulscan.nse" # Vulscan NSE script for Nmap (EDIT THIS)
 JSUBFINDER_SIGN="/root/.jsf_signatures.yaml" # Path signature location for jsubfinder (EDIT THIS)
-NUCLEI_TEMPLATES="/root/nuclei-templates" # Path templates for Nuclei (EDIT THIS)
 LINKFINDER="/root/LinkFinder/linkfinder.py" # Path for LinkFinder tool (EDIT THIS)
-SECRETFINDER="/root/SecretFinder/SecretFinder.py" # Path for SecretFinder tool (EDIT THIS)
 VHOSTS_SIEVE="/root/vhosts-sieve/vhosts-sieve.py" # Path for VHosts Sieve tool (EDIT THIS)
 CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Path for cloud_enum tool, Multi-cloud OSINT tool (EDIT THIS)
 SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool (EDIT THIS)
 ALTDNS_WORDS="/root/altdns/words-medium.txt" # Path to altdns words permutations file (EDIT THIS)
-PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool (EDIT THIS)
 DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
 XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
+CORSY="/root/Corsy/corsy.py" # Corsy tool (EDIT THIS)
 ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file
 
@@ -53,6 +51,7 @@ DALFOX=$(command -v dalfox)
 ALTDNS=$(command -v altdns)
 URO=$(command -v uro)
 CRLFUZZ=$(command -v crlfuzz)
+PPMAP=$(command -v ppmap)
 SQLMAP="/snap/bin/sqlmap"
 
 # Get large scope domain as first argument
@@ -89,15 +88,10 @@ then
 fi
 
 # Check live subdomains and status code
-cat subdomains_$HOST.txt | $HTTPX -silent -ports 80,443,3000,8080,8000,8081,8008,8888,8443,9000,9001,9090 | tee live_subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 
 # Fuzzing CRLF vulnerabilities
 $CRLFUZZ -l live_subdomains_$HOST.txt -o crlfuzz_results_$HOST.txt
-
-# Get params with ParamSpider from domain
-python3 $PARAMSPIDER --domain $HOST --exclude woff,css,js,png,svg,jpg --quiet
-cat output/$HOST.txt | $URO | tee paramspider_results_$HOST.txt
-rm -rf output/
 
 # Search for subdomains takeover with DNS Reaper
 if [ ! -z "$DNSREAPER" ]
@@ -114,7 +108,7 @@ fi
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
-    $NMAP –max-rate 500 -sS -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -p21,22,3000,8080,8000,8081,8008,8888,8443,9000,9001,9090
+    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE --top-ports 50
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
 
@@ -132,10 +126,10 @@ python3 $CLOUD_ENUM -k $HOST -k $KEYWORD -l cloud_enum_$HOST.txt
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 
 # Get URLs with gau
-cat live_subdomains_$HOST.txt | $GAU --fc 404,302,301 --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
+cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
 
-# Decrease numbers of URLs using URO
-cat all_urls_$HOST.txt | $URO | tee live_urls_$HOST.txt
+# Decrease numbers of URLs using URO and check live urls using httpx
+cat all_urls_$HOST.txt | $URO | $HTTPX -silent | tee live_urls_$HOST.txt
 
 # Get endpoints that have parameters
 cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
@@ -163,18 +157,16 @@ then
     done < javascript_urls_$HOST.txt
 fi
 
-# Discover sensitive data in js files using SECRET FINDER (you'll get many false positive!)
-if [ ! -z "$SECRETFINDER" ]
-then
-    while IFS='' read -r URL || [ -n "${URL}" ]; do
-        python3 $SECRETFINDER -i $URL -o cli | tee -a secretfinder_results_$HOST.txt
-    done < javascript_urls_$HOST.txt
-fi
+# Run corsy tool
+python3 $CORSY -i live_urls_$HOST.txt -d 2 -o corsy_results_$HOST.json
 
-# Run Nuclei on ALL subdomains
+# Run ppmap tool (Prototype Pollution)
+cat live_urls_$HOST.txt | ppmap | tee ppmap_results_$HOST.txt
+
+# Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -list subdomains_$HOST.txt -o nuclei_subdomains_$HOST.txt -c 3
+    $NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 3
 fi
 
 # Extract cloudflare protected hosts from nuclei output
@@ -209,32 +201,14 @@ cat live_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
 # Extract urls with possible OPEN REDIRECT params
 cat live_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
 
-# Extract urls with possible XSS params from paramspider output
-cat paramspider_results_$HOST.txt | $GF xss > paramspider_xss_urls_$HOST.txt
-
-# Extract urls with possible SQLi params from paramspider output
-cat paramspider_results_$HOST.txt | $GF sqli > paramspider_sqli_urls_$HOST.txt
-
 # Run Oralyzer
 if [ ! -z "$ORALYZER" ]
 then
     python3 $ORALYZER -l redirect_urls_$HOST.txt -p $ORALYZER_PAYLOADS > oralyzer_results_$HOST.txt
 fi
 
-# Running Dalfox on paramspider output and grep pattern "xss" urls
-$DALFOX file paramspider_xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless --waf-evasion
-
-sleep 30
-
 # Running Dalfox on gaued and grep pattern "xss" urls
-$DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless --waf-evasion
-
-sleep 30
-
-# Running sqlmap on paramspider output and grep pattern "sqli" urls
-$SQLMAP -m paramspider_sqli_urls_$HOST.txt --smart --batch --random-agent --output-dir=sqlmap_$HOST
-
-sleep 30
+$DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
 
 # Running sqlmap on gaued and grep pattern "sqli" urls
 $SQLMAP -m sqli_urls_$HOST.txt --smart --batch --random-agent --output-dir=sqlmap_$HOST

@@ -37,8 +37,6 @@ This script performs automated recon on a target domain (large scope) by running
 
 - NUCLEI (https://github.com/projectdiscovery/nuclei)
 
-- NUCLEI TEMPLATES (https://github.com/projectdiscovery/nuclei-templates)
-
 - NMAP (https://github.com/nmap/nmap)
 
 - CRLFUZZ (https://github.com/dwisiswant0/crlfuzz)

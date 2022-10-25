@@ -59,9 +59,11 @@ This script performs automated recon on a target domain (large scope) by running
 
 - ALTDNS (https://github.com/infosec-au/altdns)
 
-- PARAMSPIDER (https://github.com/devanshbatham/ParamSpider)
-
 - DNSREAPER (https://github.com/punk-security/dnsReaper)
+
+- CORSY (https://github.com/s0md3v/Corsy)
+
+- PPMAP (https://github.com/kleiton0x00/ppmap)
 
 ### EXAMPLES OF API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*
@@ -90,15 +92,13 @@ This script performs automated recon on a target domain (large scope) by running
 
 `ALTDNS_WORDS="" # Path to altdns words permutations file`
 
-`PARAMSPIDER="" # Path to paramspider tool`
-
 `DNSREAPER="" # Path to dnsrepaer tool`
 
 `XSSHUNTER="" # XSS Hunter url for Dalfox (blind xss)`
 
 ### Features
 
-* Searching subdomains
+* Searching for subdomains
 * Search for subdomains takeover (subjack, dnsreaper)
 * Search for live urls using gau
 * Get screenshots of subdomains
@@ -106,18 +106,18 @@ This script performs automated recon on a target domain (large scope) by running
 * Search for secrets, token and APIs
 * Search hidden endpoints in JS urls
 * Scan live hosts with Nmap and Vulscan NSE Script
-* Run Nuclei on all subdomains
+* Run Nuclei on all live subdomains
 * Search for XSS with Dalfox
 * Search for SQL injections with sqlmap
 * Search for virtual hosts
 * Search for public resources in AWS, Azure, and Google Cloud
 * Try to get origin of IPs using CloudFlair
 * Get interesting URLs for XSS, SSRF, SQLi, LFI, OPEN REDIRECT
-* Search for subdomains takeover with subjack and DNS Reaper
 * Extend searching subdomains with words permutations using altdns
-* Get all params using ParamSpider
 * Scan for Open Redirect with Oralyzer
 * Fuzzing for CRLF
+* Client-side Prototype Pollution to XSS
+* CORS Misconfiguration Scanner 
 
 ### Usage
 

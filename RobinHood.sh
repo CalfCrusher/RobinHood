@@ -88,7 +88,7 @@ then
 fi
 
 # Check live subdomains and status code
-cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
+cat subdomains_$HOST.txt | $HTTPX --mc 200,403,404,405,500 -silent | tee live_subdomains_$HOST.txt
 
 # Fuzzing CRLF vulnerabilities
 $CRLFUZZ -l live_subdomains_$HOST.txt -o crlfuzz_results_$HOST.txt
@@ -164,10 +164,8 @@ fi
 cat live_subdomains_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
 
 # Run Nuclei
-if [ ! -z "$NUCLEI_TEMPLATES" ]
-then
-    $NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 2
-fi
+$NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 2
+
 
 # Extract cloudflare protected hosts from nuclei output
 cat nuclei_subdomains_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt

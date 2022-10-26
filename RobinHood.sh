@@ -32,6 +32,7 @@ DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
 XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
 ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file
+SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -92,6 +93,9 @@ cat subdomains_$HOST.txt | $HTTPX -silent | tee live_subdomains_$HOST.txt
 # Fuzzing CRLF vulnerabilities
 $CRLFUZZ -l live_subdomains_$HOST.txt -o crlfuzz_results_$HOST.txt
 
+# Run Smuggler, a HTTP Request Smuggling / Desync testing tool
+cat live_subdomains_$HOST.txt | python3 $SMUGGLER -x -q -l smuggler_results_$HOST.txt
+
 # Search for subdomains takeover with DNS Reaper
 if [ ! -z "$DNSREAPER" ]
 then
@@ -128,7 +132,7 @@ $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
 cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,gif,svg,pdf,tiff,bmp,webp,ico,mp4,mov,js,css | tee all_urls_$HOST.txt
 
 # Decrease numbers of URLs using URO and check live urls using httpx
-cat all_urls_$HOST.txt | $URO | $HTTPX -silent | tee live_urls_$HOST.txt
+cat all_urls_$HOST.txt | $URO | $HTTPX --mc 200 -silent | tee live_urls_$HOST.txt
 
 # Get endpoints that have parameters
 cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
@@ -162,7 +166,7 @@ cat live_subdomains_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
 # Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]
 then
-    $NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 3
+    $NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 2
 fi
 
 # Extract cloudflare protected hosts from nuclei output

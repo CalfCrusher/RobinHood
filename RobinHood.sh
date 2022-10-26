@@ -157,7 +157,7 @@ then
 fi
 
 # Run ppmap tool (Prototype Pollution)
-cat live_urls_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
+cat live_subdomains_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
 
 # Run Nuclei
 if [ ! -z "$NUCLEI_TEMPLATES" ]

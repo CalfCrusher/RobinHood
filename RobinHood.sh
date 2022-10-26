@@ -30,7 +30,6 @@ SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool (EDIT THIS)
 ALTDNS_WORDS="/root/altdns/words-medium.txt" # Path to altdns words permutations file (EDIT THIS)
 DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
 XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
-CORSY="/root/Corsy/corsy.py" # Corsy tool (EDIT THIS)
 ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file
 
@@ -156,9 +155,6 @@ then
         echo -e "\n\n\n" >> linkfinder_results_$HOST.txt
     done < javascript_urls_$HOST.txt
 fi
-
-# Run corsy tool
-python3 $CORSY -i live_urls_$HOST.txt -d 2 -o corsy_results_$HOST.json
 
 # Run ppmap tool (Prototype Pollution)
 cat live_urls_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt

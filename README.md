@@ -76,8 +76,6 @@ This script performs automated recon on a target domain (large scope) by running
 
 `JSUBFINDER_SIGN="" # Signature location for jsubfinder tool`
 
-`NUCLEI_TEMPLATES="" # Path template for Nuclei`
-
 `LINKFINDER="" # Path for LinkFinder tool`
 
 `VHOSTS_SIEVE="" # Path for VHosts Sieve tool`

@@ -59,8 +59,6 @@ This script performs automated recon on a target domain (large scope) by running
 
 - DNSREAPER (https://github.com/punk-security/dnsReaper)
 
-- CORSY (https://github.com/s0md3v/Corsy)
-
 - PPMAP (https://github.com/kleiton0x00/ppmap)
 
 ### EXAMPLES OF API AND TOOLS LOCATIONS
@@ -115,7 +113,6 @@ This script performs automated recon on a target domain (large scope) by running
 * Scan for Open Redirect with Oralyzer
 * Fuzzing for CRLF
 * Client-side Prototype Pollution to XSS
-* CORS Misconfiguration Scanner 
 
 ### Usage
 

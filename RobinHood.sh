@@ -112,7 +112,7 @@ then
 fi
 
 # Get screenshots of subdomains
-$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST -t 2
+$GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST -t 2 -X 800 -Y 600 --delay 5
 
 # Searching for virtual hosts
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt

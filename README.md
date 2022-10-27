@@ -92,9 +92,9 @@ This script performs automated recon on a target domain (large scope) by running
 
 `XSSHUNTER="" # XSS Hunter url for Dalfox (blind xss)`
 
-`ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)`
+`ORALYZER="" # Oralyzer path url tool (EDIT THIS)`
 
-`ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file`
+`ORALYZER_PAYLOADS="" # Oralyzer payloads file`
 
 `SMUGGLER="" # Smuggler tool`
 

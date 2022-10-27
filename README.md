@@ -61,6 +61,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - PPMAP (https://github.com/kleiton0x00/ppmap)
 
+- FFUF (https://github.com/ffuf/ffuf)
+
 ### EXAMPLES OF API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*
 
@@ -90,6 +92,16 @@ This script performs automated recon on a target domain (large scope) by running
 
 `XSSHUNTER="" # XSS Hunter url for Dalfox (blind xss)`
 
+`ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)`
+
+`ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file`
+
+`SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool`
+
+`PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params`
+
+`SQLMAP="/snap/bin/sqlmap"`
+
 ### Features
 
 * Searching for subdomains
@@ -111,6 +123,7 @@ This script performs automated recon on a target domain (large scope) by running
 * Scan for Open Redirect with Oralyzer
 * Fuzzing for CRLF
 * Client-side Prototype Pollution to XSS
+* Search for hidden params on php endpoints
 
 ### Usage
 

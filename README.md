@@ -96,11 +96,11 @@ This script performs automated recon on a target domain (large scope) by running
 
 `ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file`
 
-`SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool`
+`SMUGGLER="" # Smuggler tool`
 
-`PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params`
+`PARAMS="" # List of params for bruteforcing GET/POST hidden params`
 
-`SQLMAP="/snap/bin/sqlmap"`
+`SQLMAP=""` # SQLMAP Tool
 
 ### Features
 

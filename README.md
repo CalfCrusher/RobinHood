@@ -98,7 +98,7 @@ This script performs automated recon on a target domain (large scope) by running
 
 `PARAMS="" # List of params for bruteforcing GET/POST hidden params`
 
-`SQLMAP=""` # SQLMAP Tool
+`SQLMAP="" # SQLMAP Tool`
 
 ### Features
 

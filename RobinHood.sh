@@ -17,7 +17,7 @@ echo ''
 echo ''
 
 # Save locations of tools and file
-FINGERPRINTS="" # Path for subjack fingerprints (EDIT THIS)
+FINGERPRINTS="/root/go/pkg/mod/github.com/haccer/subjack@v0.0.0-20201112041112-49c51e57deab/fingerprints.json" # Path for subjack fingerprints (EDIT THIS)
 CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)
 CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlair (EDIT THIS)
@@ -155,7 +155,7 @@ then
     for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST); done
     
     # POST
-    for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST -d "FUZZ=1"); done
+    for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST -d "FUZZ=1"); done
 fi
 
 # Extracts js urls
@@ -180,7 +180,7 @@ fi
 cat live_subdomains_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
 
 # Run Nuclei
-$NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 2
+$NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 1
 
 # Extract cloudflare protected hosts from nuclei output
 cat nuclei_subdomains_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | sort -u > cloudflare_hosts_$HOST.txt

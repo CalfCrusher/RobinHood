@@ -90,8 +90,6 @@ This script performs automated recon on a target domain (large scope) by running
 
 `DNSREAPER="" # Path to dnsrepaer tool`
 
-`XSSHUNTER="" # XSS Hunter url for Dalfox (blind xss)`
-
 `ORALYZER="" # Oralyzer path url tool (EDIT THIS)`
 
 `ORALYZER_PAYLOADS="" # Oralyzer payloads file`

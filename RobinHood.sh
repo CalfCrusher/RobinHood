@@ -17,7 +17,7 @@ echo ''
 echo ''
 
 # Save locations of tools and file
-FINGERPRINTS="/root/go/pkg/mod/github.com/haccer/subjack@v0.0.0-20201112041112-49c51e57deab/fingerprints.json" # Path for subjack fingerprints (EDIT THIS)
+FINGERPRINTS="" # Path for subjack fingerprints (EDIT THIS)
 CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)
 CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlair (EDIT THIS)
@@ -159,12 +159,7 @@ then
 fi
 
 # Extracts js urls
-cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
-
-# Remove duplicates
-cat javascript_urls_$HOST.txt | $QSREPLACE -a | tee javascript_urls_temp_$HOST.txt
-rm javascript_urls_$HOST.txt
-mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
+cat live_urls_$HOST.txt | $SUBJS | sort -u > javascript_urls_$HOST.txt
 
 # Remove third-part domains from js file urls
 awk "/${HOST}/" javascript_urls_$HOST.txt > javascript_urls_temp_$HOST.txt
@@ -188,12 +183,7 @@ cat live_subdomains_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
 $NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 2
 
 # Extract cloudflare protected hosts from nuclei output
-cat nuclei_subdomains_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | tee cloudflare_hosts_$HOST.txt
-
-# Remove duplicates
-cat cloudflare_hosts_$HOST.txt | $QSREPLACE -a | tee cloudflare_hosts_temp_$HOST.txt
-rm cloudflare_hosts_$HOST.txt
-mv cloudflare_hosts_temp_$HOST.txt cloudflare_hosts_$HOST.txt
+cat nuclei_subdomains_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | sort -u > cloudflare_hosts_$HOST.txt
 
 # Try to get origin ip using SSL certificate (cloudflair and censys)
 if [ ! -z "$CENSYS_API_ID" ]

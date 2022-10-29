@@ -30,11 +30,11 @@ SUBLIST3R="/root/Sublist3r/sublist3r.py" # Path for sublist3r tool (EDIT THIS)
 ALTDNS_WORDS="/root/altdns/words-medium.txt" # Path to altdns words permutations file (EDIT THIS)
 DNSREAPER="/root/dnsReaper/main.py" # Path to dnsrepaer tool (EDIT THIS)
 ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
-ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file
-SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool
-PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params
-SQLMAP="/snap/bin/sqlmap"
-XSS_PAYLOADS="/root/xss-top500-list.txt" # List of XSS payloads
+ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file (EDIT THIS)
+SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool (EDIT THIS)
+PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params (EDIT THIS)
+SQLMAP="/snap/bin/sqlmap" # SQLMAP tool (EDIT THIS)
+XSS_PAYLOADS="/root/xss-top500-list.txt" # List of XSS payloads (EDIT THIS)
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -142,20 +142,20 @@ cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
 # Get php endpoints
 cat live_urls_$HOST.txt | grep ".php" | cut -f1 -d"?" | sed 's:/*$::' | sort -u > php_endpoints_urls_$HOST.txt
 
-# Remove file if empty
+# Remove file if empty, if not run ffuf
 if [ ! -s php_endpoints_urls_$HOST.txt ]
 then
     rm php_endpoints_urls_$HOST.txt
-fi
+else
+    # Save in a folder possibile hidden params to check for sql injections later
+    if [ ! -z "$PARAMS" ]
+    then
+        # GET
+        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST); done
 
-# Save in a folder possibile hidden params to check for sql injections later
-if [ ! -z "$PARAMS" ]
-then
-    # GET
-    for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST); done
-    
-    # POST
-    for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST -d "FUZZ=1"); done
+        # POST
+        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST -d "FUZZ=1"); done
+    fi
 fi
 
 # Extracts js urls
@@ -183,7 +183,7 @@ cat live_subdomains_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
 $NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 1
 
 # Extract cloudflare protected hosts from nuclei output
-cat nuclei_subdomains_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | sort -u > cloudflare_hosts_$HOST.txt
+cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | sort -u > cloudflare_hosts_$HOST.txt
 
 # Try to get origin ip using SSL certificate (cloudflair and censys)
 if [ ! -z "$CENSYS_API_ID" ]
@@ -216,7 +216,7 @@ then
 fi
 
 # Running Dalfox
-$DALFOX file xss_urls_$HOST.txt -S -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion
+$DALFOX file xss_urls_$HOST.txt -S -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion --skip-mining-all
 
 # Running sqlmap
 $SQLMAP -m sqli_urls_$HOST.txt --tamper="between,randomcase" --delay=2 --threads=2 --smart --batch --random-agent --output-dir=sqlmap_$HOST

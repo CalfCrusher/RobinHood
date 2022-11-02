@@ -29,8 +29,6 @@ This script performs automated recon on a target domain (large scope) by running
 
 - GOWITNESS (https://github.com/sensepost/gowitness)
 
-- SQLMAP (https://github.com/sqlmapproject/sqlmap)
-
 - JSUBFINDER (https://github.com/ThreatUnkown/jsubfinder)
 
 - ORALYZER (https://github.com/r0075h3ll/Oralyzer)
@@ -98,8 +96,6 @@ This script performs automated recon on a target domain (large scope) by running
 
 `PARAMS="" # List of params for bruteforcing GET/POST hidden params`
 
-`SQLMAP="" # SQLMAP Tool`
-
 ### Features
 
 * Searching for subdomains
@@ -112,7 +108,6 @@ This script performs automated recon on a target domain (large scope) by running
 * Scan live hosts with Nmap and Vulscan NSE Script
 * Run Nuclei on all live subdomains
 * Search for XSS with Dalfox
-* Search for SQL injections with sqlmap
 * Search for virtual hosts
 * Search for public resources in AWS, Azure, and Google Cloud
 * Try to get origin of IPs using CloudFlair

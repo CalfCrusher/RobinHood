@@ -11,10 +11,6 @@ start=`date +%s`
 
 echo ''
 echo 'RobinHood - Bug Hunting Recon Automation Script (https://github.com/CalfCrusher)'
-echo ''
-echo '* Running..'
-echo ''
-echo ''
 
 # Save locations of tools and file
 FINGERPRINTS="/root/go/pkg/mod/github.com/haccer/subjack@v0.0.0-20201112041112-49c51e57deab/fingerprints.json" # Path for subjack fingerprints (EDIT THIS)
@@ -33,7 +29,6 @@ ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file (EDIT THIS)
 SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool (EDIT THIS)
 PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params (EDIT THIS)
-SQLMAP="/snap/bin/sqlmap" # SQLMAP tool (EDIT THIS)
 XSS_PAYLOADS="/root/xss-top500-list.txt" # List of XSS payloads (EDIT THIS)
 
 SUBFINDER=$(command -v subfinder)
@@ -53,7 +48,6 @@ DALFOX=$(command -v dalfox)
 ALTDNS=$(command -v altdns)
 URO=$(command -v uro)
 CRLFUZZ=$(command -v crlfuzz)
-PPMAP=$(command -v ppmap)
 FFUF=$(command -v ffuf)
 
 # Get large scope domain as first argument
@@ -62,10 +56,23 @@ HOST=$1
 # Get list of excluded subdomains as second argument
 OUT_OF_SCOPE_SUBDOMAINS=$2
 
+echo ''
+echo ''
+echo '* Subdomains Enumeration ..'
+echo ''
+echo ''
+
 # Subdomains Enumeration
 python3 $SUBLIST3R -d $HOST -o subdomains_$HOST.txt
 $SUBFINDER -d $HOST -silent | awk -F[ ' {print $1}' | tee -a subdomains_$HOST.txt
 $AMASS enum -passive -d $HOST | tee -a subdomains_$HOST.txt
+
+echo ''
+echo ''
+echo '* Adding more subdomains using permutation (AltDNS) ..'
+echo ''
+echo ''
+
 
 # Subdomains permutations with altdns
 $ALTDNS -i subdomains_$HOST.txt -o temp_output -w $ALTDNS_WORDS -r -s altdns_temp_subdomains_$HOST.txt
@@ -89,19 +96,55 @@ then
     done
 fi
 
+echo ''
+echo ''
+echo '* Checking live subdomains and status code ..'
+echo ''
+echo ''
+
 # Check live subdomains and status code
 cat subdomains_$HOST.txt | $HTTPX -mc 200,403,404,500,401 -silent | tee live_subdomains_$HOST.txt
+
+echo ''
+echo ''
+echo '* Fuzzing CRLF vulnerabilities ..'
+echo ''
+echo ''
 
 # Fuzzing CRLF vulnerabilities
 $CRLFUZZ -l live_subdomains_$HOST.txt -o crlfuzz_results_$HOST.txt
 
+# Remove file if empty
+if [ ! -s crlfuzz_results_$HOST.txt ]
+then
+    rm crlfuzz_results_$HOST.txt
+fi
+
+echo ''
+echo ''
+echo '* HTTP Request Smuggling CRLF on all live subdomains ..'
+echo ''
+echo ''
+
 # Run Smuggler, a HTTP Request Smuggling / Desync testing tool
-cat live_subdomains_$HOST.txt | python3 $SMUGGLER -x -q -l smuggler_results_$HOST.txt
+cat live_subdomains_$HOST.txt | python3 $SMUGGLER --no-color -x -q -l smuggler_results_$HOST.txt
+
+echo ''
+echo ''
+echo '* Searching for subdomains takeover ..'
+echo ''
+echo ''
 
 # Search for subdomains takeover with DNS Reaper
 if [ ! -z "$DNSREAPER" ]
 then
     python3 $DNSREAPER file --filename subdomains_$HOST.txt --out dnsreaper_$HOST --out-format json
+fi
+
+# Remove file if empty
+if [ ! -s dnsreaper_$HOST.json ]
+then
+    rm dnsreaper_$HOST.json
 fi
 
 # Search for subdomains takeover with subjack
@@ -110,37 +153,112 @@ then
     $SUBJACK -w subdomains_$HOST.txt -a -o subjack_$HOST.txt -ssl -c $FINGERPRINTS -v
 fi
 
+echo ''
+echo ''
+echo '* Running nmap on all subdomains ..'
+echo ''
+echo ''
+
 # Scan with NMAP and Vulners
 if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
-    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE --top-ports 50
+    $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -F
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
 fi
+
+echo ''
+echo ''
+echo '* Getting screenshots of all live subdomains ..'
+echo ''
+echo ''
 
 # Get screenshots of subdomains
 $GOWITNESS file -f live_subdomains_$HOST.txt -P screenshots_$HOST -t 2 -X 800 -Y 600 --delay 5
 
+echo ''
+echo ''
+echo '* Searching for vhosts ..'
+echo ''
+echo ''
+
 # Searching for virtual hosts
 python3 $VHOSTS_SIEVE -d subdomains_$HOST.txt -o vhost_$HOST.txt
+
+# Remove file if empty
+if [ ! -s vhost_$HOST.txt ]
+then
+    rm vhost_$HOST.txt
+fi
+
+echo ''
+echo ''
+echo '* Searching for public resources in AWS, Azure, and Google Cloud ..'
+echo ''
+echo ''
+
 
 # Searching for public resources in AWS, Azure, and Google Cloud
 KEYWORD=$(echo ${HOST} | cut -d"." -f1)
 python3 $CLOUD_ENUM -k $HOST -k $KEYWORD -l cloud_enum_$HOST.txt
 
+echo ''
+echo ''
+echo '* Searching for secrets in javascript files ..'
+echo ''
+echo ''
+
 # Search for secrets
 $JSUBFINDER search -f live_subdomains_$HOST.txt -s jsubfinder_secrets_$HOST.txt
+
+# Remove file if empty
+if [ ! -s jsubfinder_secrets_$HOST.txt ]
+then
+    rm jsubfinder_secrets_$HOST.txt
+fi
+
+echo ''
+echo ''
+echo '* Getting all urls using Gau ..'
+echo ''
+echo ''
 
 # Get URLs with gau
 cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,svg,pdf,tiff,tif,bmp,webp,ico,mp4,mov,js,css,eps,raw | tee all_urls_$HOST.txt
 
+echo ''
+echo ''
+echo '* Decrease and check live urls ..'
+echo ''
+echo ''
+
+
 # Decrease numbers of URLs using URO and check live urls using httpx
 cat all_urls_$HOST.txt | $URO | $HTTPX -mc 200 -silent | tee live_urls_$HOST.txt
+
+echo ''
+echo ''
+echo '* Grep endpoints with params ..'
+echo ''
+echo ''
+
 
 # Get endpoints that have parameters
 cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
 
+echo ''
+echo ''
+echo '* Grepq php endpoints without params ..'
+echo ''
+echo ''
+
 # Get php endpoints
 cat live_urls_$HOST.txt | grep ".php" | cut -f1 -d"?" | sed 's:/*$::' | sort -u > php_endpoints_urls_$HOST.txt
+
+echo ''
+echo ''
+echo '* Fuzzing php endpoints for possible hidden params ..'
+echo ''
+echo ''
 
 # Remove file if empty, if not run ffuf
 if [ ! -s php_endpoints_urls_$HOST.txt ]
@@ -158,6 +276,12 @@ else
     fi
 fi
 
+echo ''
+echo ''
+echo '* Getting JS urls ..'
+echo ''
+echo ''
+
 # Extracts js urls
 cat live_urls_$HOST.txt | $SUBJS | sort -u > javascript_urls_$HOST.txt
 
@@ -165,6 +289,12 @@ cat live_urls_$HOST.txt | $SUBJS | sort -u > javascript_urls_$HOST.txt
 awk "/${HOST}/" javascript_urls_$HOST.txt > javascript_urls_temp_$HOST.txt
 rm javascript_urls_$HOST.txt
 mv javascript_urls_temp_$HOST.txt javascript_urls_$HOST.txt
+
+echo ''
+echo ''
+echo '* Discovering endpoints in JS urls ..'
+echo ''
+echo ''
 
 # Discover endpoints in javascript urls
 if [ ! -z "$LINKFINDER" ]
@@ -176,53 +306,121 @@ then
     done < javascript_urls_$HOST.txt
 fi
 
-# Run ppmap tool (Prototype Pollution)
-cat live_subdomains_$HOST.txt | $PPMAP | tee ppmap_results_$HOST.txt
+echo ''
+echo ''
+echo '* Running Nuclei on all live subdomains ..'
+echo ''
+echo ''
 
 # Run Nuclei
-$NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 1
+$NUCLEI -list live_subdomains_$HOST.txt -o nuclei_results_$HOST.txt -c 2
+
+echo ''
+echo ''
+echo '* Extract possible cloudflare hosts and try to get origin ip ..'
+echo ''
+echo ''
 
 # Extract cloudflare protected hosts from nuclei output
 cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | sort -u > cloudflare_hosts_$HOST.txt
 
-# Try to get origin ip using SSL certificate (cloudflair and censys)
-if [ ! -z "$CENSYS_API_ID" ]
+# Remove file if empty, if not run cloudflair tool
+if [ ! -s cloudflare_hosts_$HOST.txt ] && [ -f cloudflare_hosts_$HOST.txt ]
 then
-    while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
-        python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
-        sleep 45
-    done < cloudflare_hosts_$HOST.txt
+    rm php_endpoints_urls_$HOST.txt
+else
+    # Try to get origin ip using SSL certificate (cloudflair and censys)
+    if [ ! -z "$CENSYS_API_ID" ]
+    then
+        while IFS='' read -r DOMAIN || [ -n "${DOMAIN}" ]; do
+            python3 $CLOUDFLAIR $DOMAIN --censys-api-id $CENSYS_API_ID --censys-api-secret $CENSYS_API_SECRET | tee -a origin_$HOST.txt
+            sleep 45
+        done < cloudflare_hosts_$HOST.txt
+    fi
 fi
 
-# Extract urls with possible XSS params
-cat params_endpoints_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
-
-# Extract urls with possible SQLi params
-cat params_endpoints_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
+echo ''
+echo ''
+echo '* Extracting urls with LFI and SSRF params ..'
+echo ''
+echo ''
 
 # Extract urls with possible LFI params
 cat params_endpoints_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
 
+# Remove file if empty
+if [ ! -s lfi_urls_$HOST.txt ] && [ -f lfi_urls_$HOST.txt ]
+then
+    rm lfi_urls_$HOST.txt
+fi
+
 # Extract urls with possible SSRF params
 cat params_endpoints_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
+
+# Remove file if empty
+if [ ! -s ssrf_urls_$HOST.txt ] && [ -f ssrf_urls_$HOST.txt ]
+then
+    rm ssrf_urls_$HOST.txt
+fi
+
+echo ''
+echo ''
+echo '* Extracting urls with possible XSS params and run Dalfox ..'
+echo ''
+echo ''
+
+# Extract urls with possible XSS params
+cat params_endpoints_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
+
+# Remove file if empty, if not run dalfox tool
+if [ ! -s xss_urls_$HOST.txt ] && [ -f xss_urls_$HOST.txt ]
+then
+    rm xss_urls_$HOST.txt
+else
+    # Running Dalfox
+    $DALFOX file xss_urls_$HOST.txt -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion --skip-mining-all
+fi    
+
+echo ''
+echo ''
+echo '* Extracting urls with possible SQL params ..'
+echo ''
+echo ''
+
+# Extract urls with possible SQLi params
+cat params_endpoints_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
+
+# Remove file if empty
+if [ ! -s sqli_urls_$HOST.txt ] && [ -f sqli_urls_$HOST.txt ]
+then
+    rm sqli_urls_$HOST.txt
+fi
+
+echo ''
+echo ''
+echo '* Extracting urls with possible OPEN Redirect params and run Oralyzer ..'
+echo ''
+echo ''
 
 # Extract urls with possible OPEN REDIRECT params
 cat params_endpoints_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
 
-# Run Oralyzer
-if [ ! -z "$ORALYZER" ]
+# Remove file if empty
+if [ ! -s redirect_urls_$HOST.txt ] && [ -f redirect_urls_$HOST.txt ]
 then
-    python3 $ORALYZER -l redirect_urls_$HOST.txt -p $ORALYZER_PAYLOADS > oralyzer_results_$HOST.txt
+    rm redirect_urls_$HOST.txt
+else
+    # Run Oralyzer
+    if [ ! -z "$ORALYZER" ]
+    then
+        python3 $ORALYZER -l redirect_urls_$HOST.txt -p $ORALYZER_PAYLOADS > oralyzer_results_$HOST.txt
+    fi
 fi
-
-# Running Dalfox
-$DALFOX file xss_urls_$HOST.txt -S -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion --skip-mining-all
-
-# Running sqlmap
-$SQLMAP -m sqli_urls_$HOST.txt --tamper="between,randomcase" --delay=2 --threads=2 --smart --batch --random-agent --output-dir=sqlmap_$HOST
 
 # Save finish execution time
 end=`date +%s`
+echo ''
+echo ''
 echo ''
 echo "********* COMPLETED ! *********"
 echo ''

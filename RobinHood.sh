@@ -325,7 +325,7 @@ echo ''
 cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E 's/^\s*.*:\/\///g' | sed 's/\///'g | sort -u > cloudflare_hosts_$HOST.txt
 
 # Remove file if empty, if not run cloudflair tool
-if [ ! -s cloudflare_hosts_$HOST.txt ] && [ -f cloudflare_hosts_$HOST.txt ]
+if [ ! -s cloudflare_hosts_$HOST.txt ]
 then
     rm php_endpoints_urls_$HOST.txt
 else
@@ -349,7 +349,7 @@ echo ''
 cat params_endpoints_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
 
 # Remove file if empty
-if [ ! -s lfi_urls_$HOST.txt ] && [ -f lfi_urls_$HOST.txt ]
+if [ ! -s lfi_urls_$HOST.txt ]
 then
     rm lfi_urls_$HOST.txt
 fi
@@ -358,7 +358,7 @@ fi
 cat params_endpoints_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
 
 # Remove file if empty
-if [ ! -s ssrf_urls_$HOST.txt ] && [ -f ssrf_urls_$HOST.txt ]
+if [ ! -s ssrf_urls_$HOST.txt ]
 then
     rm ssrf_urls_$HOST.txt
 fi
@@ -373,7 +373,7 @@ echo ''
 cat params_endpoints_urls_$HOST.txt | $GF xss > xss_urls_$HOST.txt
 
 # Remove file if empty, if not run dalfox tool
-if [ ! -s xss_urls_$HOST.txt ] && [ -f xss_urls_$HOST.txt ]
+if [ ! -s xss_urls_$HOST.txt ]
 then
     rm xss_urls_$HOST.txt
 else
@@ -391,7 +391,7 @@ echo ''
 cat params_endpoints_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
 
 # Remove file if empty
-if [ ! -s sqli_urls_$HOST.txt ] && [ -f sqli_urls_$HOST.txt ]
+if [ ! -s sqli_urls_$HOST.txt ]
 then
     rm sqli_urls_$HOST.txt
 fi
@@ -406,7 +406,7 @@ echo ''
 cat params_endpoints_urls_$HOST.txt | $GF redirect > redirect_urls_$HOST.txt
 
 # Remove file if empty
-if [ ! -s redirect_urls_$HOST.txt ] && [ -f redirect_urls_$HOST.txt ]
+if [ ! -s redirect_urls_$HOST.txt ]
 then
     rm redirect_urls_$HOST.txt
 else

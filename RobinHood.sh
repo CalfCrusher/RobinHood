@@ -245,6 +245,12 @@ echo ''
 # Get endpoints that have parameters
 cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
 
+# Remove file if empty
+if [ ! -s params_endpoints_urls_$HOST.txt ]
+then
+    rm params_endpoints_urls_$HOST.txt
+fi
+
 echo ''
 echo ''
 echo '* Grepq php endpoints without params ..'
@@ -327,7 +333,7 @@ cat nuclei_results_$HOST.txt | grep ":cloudflare" | awk '{print $(NF)}' | sed -E
 # Remove file if empty, if not run cloudflair tool
 if [ ! -s cloudflare_hosts_$HOST.txt ]
 then
-    rm php_endpoints_urls_$HOST.txt
+    rm cloudflare_hosts_$HOST.txt
 else
     # Try to get origin ip using SSL certificate (cloudflair and censys)
     if [ ! -z "$CENSYS_API_ID" ]

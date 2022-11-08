@@ -13,7 +13,6 @@ echo ''
 echo 'RobinHood - Bug Hunting Recon Automation Script (https://github.com/CalfCrusher)'
 
 # Save locations of tools and file
-FINGERPRINTS="/root/go/pkg/mod/github.com/haccer/subjack@v0.0.0-20201112041112-49c51e57deab/fingerprints.json" # Path for subjack fingerprints (EDIT THIS)
 CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)
 CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlair (EDIT THIS)

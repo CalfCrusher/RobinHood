@@ -94,7 +94,7 @@ This script performs automated recon on a target domain (large scope) by running
 
 `DNSREAPER="" # Path to dnsrepaer tool`
 
-`ORALYZER="" # Oralyzer path url tool (EDIT THIS)`
+`ORALYZER="" # Oralyzer path url tool`
 
 `ORALYZER_PAYLOADS="" # Oralyzer payloads file`
 

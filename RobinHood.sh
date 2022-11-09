@@ -3,7 +3,7 @@
 ## RobinHood - Bug Hunting Recon Automation Script
 ## https://github.com/CalfCrusher
 
-## Usage: Run in background mod with: nohup ./RobinHood.sh LARGE_SCOPE_DOMAIN OUT_OF_SCOPE_LIST 2>&1 &
+## Usage: Run in background with command: nohup ./RobinHood.sh LARGE_SCOPE_DOMAIN OUT_OF_SCOPE_LIST 2>&1 &
 ## Esample: nohup ./RobinHood.sh example.com vpn.example.com,test.example.com 2>&1 &
 
 # Save starting execution time
@@ -33,7 +33,7 @@ XSS_PAYLOADS="/root/xss-payloads-short-list.txt" # List of XSS payloads (EDIT TH
 PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool (EDIT THIS)
 DIRSEARCH="/root/dirsearch/dirsearch.py" # Path to dirsearch tool (EDIT THIS)
 DIRSEARCH_WORDLIST="/root/dirsearch/dirsearch.txt" # Path to dirsearch wordlist (EDIT THIS)
-$URL_OUT_OF_BAND="https://webhook.site/c7bbcccf-42d9-4161-9713-a6f458a5a4e9" # Url for out of band interactions (use Burp Collaborator or similar)
+URL_OUT_OF_BAND="https://webhook.site/c7bbcccf-42d9-4161-9713-a6f458a5a4e9" # Url for out of band interactions (use Burp Collaborator or similar)
 
 SUBFINDER=$(command -v subfinder)
 AMASS=$(command -v amass)
@@ -77,7 +77,7 @@ echo '* Adding more subdomains using permutation (AltDNS) ..'
 echo ''
 echo ''
 
-# Subdomains permutations with altdns
+# Add more Subdomains using permutations with Altdns
 $ALTDNS -i subdomains_$HOST.txt -o temp_output -w $ALTDNS_WORDS -r -s altdns_temp_subdomains_$HOST.txt
 cat altdns_temp_subdomains_$HOST.txt | cut -f1 -d":" | tee -a subdomains_$HOST.txt
 rm temp_output && rm altdns_temp_subdomains_$HOST.txt
@@ -105,7 +105,7 @@ echo '* Checking live subdomains and status code ..'
 echo ''
 echo ''
 
-# Check live subdomains and status code
+# Get live subdomains and status code only for few
 cat subdomains_$HOST.txt | $HTTPX -mc 200,403,404,500,401 -silent | tee live_subdomains_$HOST.txt
 
 echo ''
@@ -115,7 +115,7 @@ echo ''
 echo ''
 
 # Run dirsearch on all live subdomains
-python3 $DIRSEARCH -l live_subdomains_$HOST.txt -e php,html,aspx -w $DIRSEARCH_WORDLIST -o dirsearch_results.txt --format=plain
+python3 $DIRSEARCH -l live_subdomains_$HOST.txt -e php,html,aspx -w $DIRSEARCH_WORDLIST -q -t 5 -i 200 -o dirsearch_results.txt --format=plain
 
 echo ''
 echo ''
@@ -293,10 +293,10 @@ else
     if [ ! -z "$PARAMS" ]
     then
         # GET
-        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_results); done
+        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -u "${URL}?FUZZ=1" -s -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_results); done
 
         # POST
-        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_results -d "FUZZ=1"); done
+        for URL in $(<php_endpoints_urls_$HOST.txt); do ($FFUF -X POST -u "${URL}" -s -w $PARAMS -mc 200 -ac -sa -t 20 -or -od ffuf_hidden_params_results -d "FUZZ=1"); done
     fi
 fi
 
@@ -369,12 +369,12 @@ echo '* Search path traversal vuln on ParamSpider results using FFUF ..'
 echo ''
 echo ''
 
-# Search of LFI
+# Search of LFI using FFUF
 if [ ! -s paramspider_results_$HOST.txt ]
 then
     rm paramspider_results_$HOST.txt
 else
-    for URL in $(<paramspider_results_$HOST.txt); do ($FFUF -u "${URL}" -c -w $LFI_PAYLOADS -mc 200 -ac -sa -t 20 -or -od ffuf_lfi_results); done
+    for URL in $(<paramspider_results_$HOST.txt); do ($FFUF -u "${URL}" -s -w $LFI_PAYLOADS -mc 200 -ac -sa -t 20 -or -od ffuf_lfi_results); done
 fi
 
 echo ''

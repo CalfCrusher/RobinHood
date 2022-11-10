@@ -10,7 +10,7 @@
 start=`date +%s`
 
 echo ''
-echo 'RobinHood - Bug Hunting Recon Automation Script (https://github.com/CalfCrusher)'
+echo 'RobinHood - Bug Hunting Recon Automation Script (https://github.com/CalfCrusher/RobinHood)'
 
 # Save locations of tools and file
 CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)

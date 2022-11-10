@@ -115,7 +115,7 @@ echo ''
 echo ''
 
 # Run dirsearch on all live subdomains
-python3 $DIRSEARCH -l live_subdomains_$HOST.txt -e php,html,aspx -w $DIRSEARCH_WORDLIST -q -t 5 -i 200 -o dirsearch_results.txt --format=plain
+python3 $DIRSEARCH -l live_subdomains_$HOST.txt --max-time=86400 -e php,aspx -w $DIRSEARCH_WORDLIST -q -t 10 -i 200,403 -o dirsearch_results.txt --format=plain
 
 echo ''
 echo ''
@@ -410,7 +410,7 @@ then
 else
     # Running Dalfox
     $DALFOX file xss_urls_$HOST.txt -o dalfox_PoC_$HOST.txt --custom-payload $XSS_PAYLOADS --only-custom-payload --waf-evasion -w 20
-fi    
+fi
 
 echo ''
 echo ''

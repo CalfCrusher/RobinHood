@@ -4,7 +4,7 @@
 ## https://github.com/CalfCrusher
 
 ## Usage: Run in background with command: nohup ./RobinHood.sh LARGE_SCOPE_DOMAIN OUT_OF_SCOPE_LIST 2>&1 &
-## Esample: nohup ./RobinHood.sh example.com vpn.example.com,test.example.com 2>&1 &
+## Example: nohup ./RobinHood.sh example.com vpn.example.com,test.example.com 2>&1 &
 
 # Save starting execution time
 start=`date +%s`

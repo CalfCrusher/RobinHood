@@ -41,6 +41,8 @@ This script performs automated recon on a target domain (large scope) by running
 
 - NMAP (https://github.com/nmap/nmap)
 
+- SMUGGLER (https://github.com/defparam/smuggler)
+
 - CRLFUZZ (https://github.com/dwisiswant0/crlfuzz)
 
 - CLOUDFLAIR (https://github.com/christophetd/CloudFlair)
@@ -60,8 +62,6 @@ This script performs automated recon on a target domain (large scope) by running
 - ALTDNS (https://github.com/infosec-au/altdns)
 
 - DNSREAPER (https://github.com/punk-security/dnsReaper)
-
-- PPMAP (https://github.com/kleiton0x00/ppmap)
 
 - FFUF (https://github.com/ffuf/ffuf)
 

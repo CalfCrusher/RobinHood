@@ -125,6 +125,7 @@ This script performs automated recon on a target domain (large scope) by running
 * Search for subdomains
 * Search for subdomains takeover (dnsreaper)
 * Search for live urls using gau
+* Spider live urls using Katana
 * Get screenshots of subdomains
 * Powered by GF-Patterns
 * Search for secrets, token and APIs

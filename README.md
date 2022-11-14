@@ -112,7 +112,7 @@ This script performs automated recon on a target domain (large scope) by running
 
 `PARAMSPIDER="" # Path to paramspider tool `
 
-`DIRSEARCH=" # Path to dirsearch tool``
+`DIRSEARCH="" # Path to dirsearch tool`
 
 `DIRSEARCH_WORDLIST="" # Path to dirsearch wordlist `
 

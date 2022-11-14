@@ -67,6 +67,12 @@ This script performs automated recon on a target domain (large scope) by running
 
 - PARAMSPIDER (https://github.com/devanshbatham/ParamSpider)
 
+- ARJUN (https://github.com/s0md3v/Arjun)
+
+- KATANA (https://github.com/projectdiscovery/katana)
+
+- LOG4J SCAN (https://github.com/fullhunt/log4j-scan)
+
 ### EXAMPLES OF API AND TOOLS LOCATIONS
 *If you don't set those variables the related tools will not run!*
 
@@ -102,6 +108,18 @@ This script performs automated recon on a target domain (large scope) by running
 
 `PARAMS="" # List of params for bruteforcing GET/POST hidden params`
 
+`LFI_PAYLOADS="" # List of payloads for LFI `
+
+`PARAMSPIDER="" # Path to paramspider tool `
+
+`DIRSEARCH=" # Path to dirsearch tool``
+
+`DIRSEARCH_WORDLIST="" # Path to dirsearch wordlist `
+
+`LOG4JSCAN="" # Path do log4jscan tool`
+
+`HEADERS_LOG4J="" # Path to log4j headers`
+
 ### Features
 
 * Search for subdomains
@@ -120,15 +138,17 @@ This script performs automated recon on a target domain (large scope) by running
 * Search for LFI on ParamSpider results using FFUF
 * Search for public resources in AWS, Azure, and Google Cloud
 * Try to get origin of IPs using CloudFlair
-* Get interesting URLs for XSS, SSRF, SQLi, LFI, OPEN REDIRECT
+* Get interesting URLs for XSS, SQLi, LFI, OPEN REDIRECT
 * Extend searching subdomains with words permutations using altdns
 * Scan for Open Redirect with Oralyzer
 * Fuzzing for CRLF
 * Client-side Prototype Pollution to XSS
-* Search for hidden params on php endpoints
-* Try out-of-band interactions on SSRF urls
+* Search for hidden params on php/aspx endpoints with FFUF
+* Search for hidden params on endpoints with Arjun
+* Search for log4j vulnerability
+* Search directories and file using Dirsearch
 
-and so on..
+and much more !
 
 ### Usage
 

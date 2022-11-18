@@ -13,9 +13,9 @@ echo ''
 echo 'RobinHood - Bug Hunting Recon Automation Script (https://github.com/CalfCrusher)'
 
 # Save locations of tools and file
-CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)
 CENSYS_API_ID="" # Censys api id for CloudFlair(EDIT THIS)
 CENSYS_API_SECRET="" # Censys api secret for CloudFlair (EDIT THIS)
+CLOUDFLAIR="/root/CloudFlair/cloudflair.py" # Path for CloudFlair tool location (EDIT THIS)
 VULSCAN_NMAP_NSE="/root/vulscan/vulscan.nse" # Vulscan NSE script for Nmap (EDIT THIS)
 JSUBFINDER_SIGN="/root/.jsf_signatures.yaml" # Path signature location for jsubfinder (EDIT THIS)
 LINKFINDER="/root/LinkFinder/linkfinder.py" # Path for LinkFinder tool (EDIT THIS)
@@ -28,7 +28,7 @@ ORALYZER="/root/Oralyzer/oralyzer.py" # Oralyzer path url tool (EDIT THIS)
 ORALYZER_PAYLOADS="/root/Oralyzer/payloads.txt" # Oralyzer payloads file (EDIT THIS)
 SMUGGLER="/root/smuggler/smuggler.py" # Smuggler tool (EDIT THIS)
 PARAMS="/root/params.txt" # List of params for bruteforcing GET/POST hidden params (EDIT THIS)
-LFI_PAYLOADS="/root/LFI-LFISuite-pathtotest.txt" # List of payloads for LFI
+LFI_PAYLOADS="/root/lfi-basic.txt" # List of payloads for LFI
 PARAMSPIDER="/root/ParamSpider/paramspider.py" # Path to paramspider tool (EDIT THIS)
 DIRSEARCH="/root/dirsearch/dirsearch.py" # Path to dirsearch tool (EDIT THIS)
 DIRSEARCH_WORDLIST="/root/dirsearch/dirsearch.txt" # Path to dirsearch wordlist (EDIT THIS)
@@ -248,7 +248,7 @@ echo ''
 echo ''
 
 # Get URLs with katana
-$KATANA -u live_subdomains_$HOST.txt -d 4 -ef png,jpg,gif,jpeg,swf,woff,svg,pdf,tiff,tif,bmp,webp,ico,mp4,mov,js,css,eps,raw -fs fqdn -kf -nc -jc -ct 1800 -silent -c 5 -p 2 -rl 50 -o katana_urls_$HOST.txt
+$KATANA -u live_subdomains_$HOST.txt -d 4 -ef png,jpg,gif,jpeg,swf,woff,svg,pdf,tiff,tif,bmp,webp,ico,mp4,mov,js,css,eps,raw -kf -nc -ct 1800 -silent -c 5 -p 2 -rl 50 -o katana_urls_$HOST.txt
 
 # Add new spidered urls to full list
 cat katana_urls_$HOST.txt | tee -a all_urls_$HOST.txt
